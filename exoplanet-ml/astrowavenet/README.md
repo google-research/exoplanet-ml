@@ -27,6 +27,7 @@ the top-level README, this package requires:
 To train a model on synthetic transits:
 
 ```bash
+cd exoplanet-ml  # Bazel must run from a directory with a WORKSPACE file
 bazel build astrowavenet/...
 ```
 

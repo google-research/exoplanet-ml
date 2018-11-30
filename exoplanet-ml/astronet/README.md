@@ -116,7 +116,7 @@ file corresponds to a specific Kepler quarter, but some quarters are divided
 into multiple `.fits` files.
 
 ```python
-# Launch iPython (or Python) from the tensorflow_models/astronet/ directory.
+# Launch iPython (or Python) from the exoplanet-ml directory.
 ipython
 
 In[1]:
@@ -195,7 +195,8 @@ input TCE CSV file. The columns include:
 #
 # Alternatively, since all code is pure Python and does not need to be compiled,
 # we could invoke the source scripts with the following addition to PYTHONPATH:
-#     export PYTHONPATH="/path/to/source/dir/:${PYTHONPATH}"
+#     export PYTHONPATH="/path/to/repo/exoplanet-ml/:${PYTHONPATH}"
+cd exoplanet-ml  # Bazel must run from a directory with a WORKSPACE file
 bazel build astronet/...
 
 # Directory to save output TFRecord files into.

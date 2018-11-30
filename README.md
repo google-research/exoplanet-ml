@@ -62,7 +62,7 @@ C++ light curve operations.
 Verify that all dependencies are satisfied by running the unit tests:
 
 ```bash
-cd exoplanet-ml  # Bazel commands must run from a directory with a WORKSPACE file
+cd exoplanet-ml  # Bazel must run from a directory with a WORKSPACE file
 bazel test astronet/... astrowavenet/... light_curve/... tf_util/... third_party/...
 ```
 
