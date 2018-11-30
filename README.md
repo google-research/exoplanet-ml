@@ -66,7 +66,7 @@ cd exoplanet-ml  # Bazel must run from a directory with a WORKSPACE file
 bazel test astronet/... astrowavenet/... light_curve/... tf_util/... third_party/...
 ```
 
-## Citation
+# Citation
 
 If you find this code useful, please cite our paper:
 
@@ -76,3 +76,6 @@ around Kepler-90. *The Astronomical Journal*, 155(2), 94.
 
 Full text available at [*The Astronomical Journal*](http://iopscience.iop.org/article/10.3847/1538-3881/aa9e09/meta).
 
+# Disclaimer
+
+This is not an official Google product.
