@@ -22,7 +22,7 @@ Otherwise, click through to the desired directory as outlined below.
   * Training and evaluating a new model.
   * Using a trained model to generate new predictions.
 
-[astrowavenet/](aexoplanet-ml/strowavenet/)
+[astrowavenet/](exoplanet-ml/astrowavenet/)
 
 * A generative model for light curves.
 
