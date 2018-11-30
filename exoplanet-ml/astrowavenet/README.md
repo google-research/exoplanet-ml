@@ -15,7 +15,7 @@ Chris Shallue: [@cshallue](https://github.com/cshallue)
 
 ## Additional Dependencies
 
-In addition to the [required packages](../README.md#required-packages) listed in
+In addition to the [required packages](../../README.md#required-packages) listed in
 the top-level README, this package requires:
 
 * **TensorFlow 1.12 or greater** ([instructions](https://www.tensorflow.org/install/))

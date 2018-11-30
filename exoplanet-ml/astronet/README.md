@@ -35,8 +35,8 @@ Full text available at [*The Astronomical Journal*](http://iopscience.iop.org/ar
 ### Required Packages
 
 First, ensure that you have installed the
-[required packages](../README.md#required-packages) and that the
-[unit tests](../README.md#run-unit-tests) pass.
+[required packages](../../README.md#required-packages) and that the
+[unit tests](../../README.md#run-unit-tests) pass.
 
 ### Download Kepler Data
 
@@ -61,7 +61,8 @@ other phenomena.
 ![Kepler-934 Transits](docs/kepler-943-transits.png)
 
 You can download the DR24 TCE Table in CSV format from the [NASA Exoplanet
-Archive](https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=q1_q17_dr24_tce). Ensure the following columns are selected:
+Archive](https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=q1_q17_dr24_tce).
+Ensure the following columns are selected:
 
 * `rowid`: Integer ID of the row in the TCE table.
 * `kepid`: Kepler ID of the target star.
@@ -108,7 +109,8 @@ ${KEPLER_DATA_DIR}`
 
 Let's explore the downloaded light curve of the Kepler-90 star! Note that Kepler
 light curves are divided into
-[four quarters each year](https://keplerscience.arc.nasa.gov/data-products.html#kepler-data-release-notes), which are separated by the quarterly rolls that the spacecraft
+[four quarters each year](https://keplerscience.arc.nasa.gov/data-products.html#kepler-data-release-notes),
+which are separated by the quarterly rolls that the spacecraft
 made to reorient its solar panels. In the downloaded light curves, each `.fits`
 file corresponds to a specific Kepler quarter, but some quarters are divided
 into multiple `.fits` files.
