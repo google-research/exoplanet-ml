@@ -5,7 +5,7 @@ https://arxiv.org/abs/1609.03499
 
 ## Code Authors
 
-Alex Tamkin: [@atamkin](https://github.com/atamkin)
+Alex Tamkin: [@alextamkin](https://github.com/alextamkin)
 
 Chris Shallue: [@cshallue](https://github.com/cshallue)
 
