@@ -192,7 +192,7 @@ def read_kepler_light_curve(filenames,
     interpolate_missing_time: Whether to interpolate missing (NaN) time values.
       This should only affect the output if scramble_type is specified (NaN time
       values typically come with NaN flux values, which are removed anyway, but
-      scrambing decouples NaN time values from NaN flux values).
+      scrambling decouples NaN time values from NaN flux values).
 
   Returns:
     all_time: A list of numpy arrays; the time values of the light curve.

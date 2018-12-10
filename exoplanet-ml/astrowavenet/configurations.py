@@ -67,7 +67,7 @@ def categorical():
 
 
 def get_config(config_name):
-  """Returns config correspnding to provided name."""
+  """Returns config corresponding to provided name."""
   if config_name in ["base", "normal"]:
     return base()
   elif config_name == "categorical":
