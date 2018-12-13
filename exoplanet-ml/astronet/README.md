@@ -1,4 +1,4 @@
-# AstroNet: A Neural Network for Identifying Exoplanets in Light Curves
+# Astr Net: A Neural Network for Identifying Exoplanets in Light Curves
 
 ![Transit Animation](docs/transit.gif)
 
@@ -30,37 +30,87 @@ around Kepler-90. *The Astronomical Journal*, 155(2), 94.
 
 Full text available at [*The Astronomical Journal*](http://iopscience.iop.org/article/10.3847/1538-3881/aa9e09/meta).
 
-## Walkthrough
+# Walkthrough
 
-### Required Packages
+## Setup
 
 First, ensure that you have installed the
 [required packages](../../README.md#required-packages) and that the
 [unit tests](../../README.md#run-unit-tests) pass.
 
-### Download Kepler Data
+Next, use Bazel to create exectuable Python scripts. (Alternatively, since all
+code is pure Python and does not need to be compiled, we could instead add the
+`exoplanet-ml` directory to `PYTHONPATH`.)
+
+```bash
+cd exoplanet-ml  # Bazel must run from a directory with a WORKSPACE file
+bazel build astronet/...
+```
+
+## Kepler Data and TCEs
 
 A *light curve* is a plot of the brightness of a star over time. We will be
 focusing on light curves produced by the Kepler space telescope, which monitored
-the brightness of 200,000 stars in our milky way galaxy for 4 years. An example
-light curve produced by Kepler is shown below.
+the brightness of 200,000 stars in our milky way galaxy for 4 years. One of the
+light curves produced by Kepler is shown below.
 
 ![Kepler-934](docs/kepler-943.png)
 
-To train a model to identify planets in Kepler light curves, you will need a
+To train a model to identify planets in Kepler light curves, we will need a
 training set of labeled *Threshold Crossing Events* (TCEs). A TCE is a periodic
 signal that has been detected in a Kepler light curve, and is associated with a
 *period* (the number of days between each occurrence of the detected signal),
-a *duration* (the time taken by each occurrence of the signal), an *epoch* (the
+a *duration* (the time elapsed by each occurrence of the signal), an *epoch* (the
 time of the first observed occurrence of the signal), and possibly additional
-metadata like the signal-to-noise ratio. An example TCE is shown below. The
-labels are ground truth classifications (decided by humans) that indicate which
-TCEs in the training set are actual planets signals and which are caused by
-other phenomena.
+metadata like the signal-to-noise ratio. A TCE that was detected in our example
+light curve is shown with red arrows in the image below.
 
 ![Kepler-934 Transits](docs/kepler-943-transits.png)
 
-You can download the DR24 TCE Table in CSV format from the [NASA Exoplanet
+We will train our model to classify whether a given TCE is an actual planet
+signal or whether it was caused by some other phenomenon (e.g. a [binary
+star](https://en.wikipedia.org/wiki/Binary_star)). We will train and evaluate
+our model using the TCEs from the [DR24 TCE
+table](https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=q1_q17_dr24_tce)
+that have been assigned ground truth labels by humans.
+
+## Shortcut: Download a Pre-Computed Training Set
+
+A pre-computed training set (along with held-out evaluation and test sets) is
+available for download at the following URL:
+https://storage.googleapis.com/kepler-ml/astronet/data/kepler/kepler-tce-tfrecords-20180220.tar.gz
+
+To download and extract the files in the training set, run the following
+commands:
+
+```bash
+# Download compressed archive (~105.7MB).
+wget https://storage.googleapis.com/kepler-ml/astronet/data/kepler/kepler-tce-tfrecords-20180220.tar.gz
+
+# Create directory for the extracted TFRecord files.
+BASE_DIR="${HOME}/astronet/"
+mkdir -p ${BASE_DIR}
+
+# Extract files.
+tar -xvf kepler-tce-tfrecords-20180220.tar.gz -C ${BASE_DIR}
+
+# Extracted files are located in the 'tfrecord' subdirectory.
+TFRECORD_DIR="${BASE_DIR}/tfrecord"
+ls -l ${TFRECORD_DIR}
+
+# Clean up archive file.
+rm kepler-tce-tfrecords-20180220.tar.gz
+```
+
+If you like, you can read through the following sections to understand how the
+training set was created. Otherwise, you can jump directly to [Train an
+AstroNet Model](#train-an-astronet-model).
+
+## Download the Kepler Data
+
+To create our training set, the first step is to download the list of labeled
+TCEs that will comprise the training set. You can download the DR24 TCE Table
+in CSV format from the [NASA Exoplanet
 Archive](https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=q1_q17_dr24_tce).
 Ensure the following columns are selected:
 
@@ -166,9 +216,9 @@ transits) and Kepler-90 g (the second biggest known planet in the system with
 the second deepest transits).
 
 
-### Process Kepler Data
+## Process Kepler Data
 
-To train a model to identify exoplanets, you will need to provide TensorFlow
+To train a model to identify exoplanets, we will need to provide TensorFlow
 with training data in
 [TFRecord](https://www.tensorflow.org/programmers_guide/datasets) format. The
 TFRecord format consists of a set of sharded files containing serialized
@@ -191,14 +241,6 @@ input TCE CSV file. The columns include:
 * `tce_period`: Period of the detected event, in days.
 
 ```bash
-# Use Bazel to create executable Python scripts.
-#
-# Alternatively, since all code is pure Python and does not need to be compiled,
-# we could invoke the source scripts with the following addition to PYTHONPATH:
-#     export PYTHONPATH="/path/to/repo/exoplanet-ml/:${PYTHONPATH}"
-cd exoplanet-ml  # Bazel must run from a directory with a WORKSPACE file
-bazel build astronet/...
-
 # Directory to save output TFRecord files into.
 TFRECORD_DIR="${HOME}/astronet/tfrecord"
 
@@ -287,7 +329,7 @@ The output should look something like this:
 
 ### Train an AstroNet Model
 
-This directory contains several types of neural network architecture and various
+This repository contains several choices of neural network architecture and various
 configuration options. To train a convolutional neural network to classify
 Kepler TCEs as either "planet" or "not planet", using the best configuration
 from
@@ -320,7 +362,7 @@ The TensorBoard server will show a page like this:
 
 ![TensorBoard](docs/tensorboard.png)
 
-### Evaluate an AstroNet Model
+## Evaluate an AstroNet Model
 
 Run the following command to evaluate a model on the test set. The result will
 be printed on the screen, and a summary file will also be written to the model
@@ -341,7 +383,7 @@ The output should look something like this:
 INFO:tensorflow:Saving dict for global step 10000: accuracy/accuracy = 0.9625159, accuracy/num_correct = 1515.0, auc = 0.988882, confusion_matrix/false_negatives = 10.0, confusion_matrix/false_positives = 49.0, confusion_matrix/true_negatives = 1165.0, confusion_matrix/true_positives = 350.0, global_step = 10000, loss = 0.112445444, losses/weighted_cross_entropy = 0.11295206, num_examples = 1574.
 ```
 
-### Make Predictions
+## Make Predictions
 
 Suppose you detect a weak TCE in the light curve of the Kepler-90 star, with
 period 14.44912 days, duration 2.70408 hours (0.11267 days) beginning 2.2 days
@@ -349,6 +391,13 @@ after 12:00 on 1/1/2009 (the year the Kepler telescope launched). To run this
 TCE though your trained model, execute the following command:
 
 ```bash
+# If you skipped the step of downloading the Kepler data, you will first need
+# to download the light curve for Kepler-90 (~5.7MB):
+KEPLER_DATA_DIR="${HOME}/astronet/kepler/"
+wget -nH --cut-dirs=6 -r -l0 -c -N -np -erobots=off -R 'index*' -A _llc.fits \
+  -P ${KEPLER_DATA_DIR}/0114/011442793 \
+  http://archive.stsci.edu/pub/kepler/lightcurves/0114/011442793/
+
 # Generate a prediction for a new TCE.
 bazel-bin/astronet/predict \
   --model=AstroCNNModel \
