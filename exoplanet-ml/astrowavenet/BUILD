@@ -11,6 +11,7 @@ py_binary(
     deps = [
         ":astrowavenet_model",
         ":configurations",
+        ":visualization_hooks",
         "//astrowavenet/data:kepler_light_curves",
         "//astrowavenet/data:synthetic_transits",
         "//astrowavenet/util:estimator_util",
@@ -30,6 +31,14 @@ py_library(
     name = "astrowavenet_model",
     srcs = [
         "astrowavenet_model.py",
+    ],
+    srcs_version = "PY2AND3",
+)
+
+py_library(
+    name = "visualization_hooks",
+    srcs = [
+        "visualization_hooks.py",
     ],
     srcs_version = "PY2AND3",
 )

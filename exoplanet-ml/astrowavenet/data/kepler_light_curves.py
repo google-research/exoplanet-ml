@@ -24,6 +24,7 @@ from astrowavenet.data import base
 
 COND_INPUT_KEY = "mask"
 AR_INPUT_KEY = "flux"
+KEPLER_ID_KEY = "kepler_id"
 
 
 class KeplerLightCurves(base.TFRecordDataset):
@@ -38,13 +39,16 @@ class KeplerLightCurves(base.TFRecordDataset):
           features={
               AR_INPUT_KEY: tf.VarLenFeature(tf.float32),
               COND_INPUT_KEY: tf.VarLenFeature(tf.int64),
+              KEPLER_ID_KEY: tf.FixedLenFeature(tf.int64, shape=[])
           })
       # Extract values from SparseTensor objects.
       autoregressive_input = features[AR_INPUT_KEY].values
       conditioning_stack = tf.to_float(features[COND_INPUT_KEY].values)
+      example_id = tf.to_float(features[KEPLER_ID_KEY].values)
       return {
           "autoregressive_input": autoregressive_input,
           "conditioning_stack": conditioning_stack,
+          "example_id": example_id,
       }
 
     return _example_parser

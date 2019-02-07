@@ -31,6 +31,7 @@ def _prepare_wavenet_inputs(light_curve, mask):
   return {
       "autoregressive_input": tf.expand_dims(light_curve, -1),
       "conditioning_stack": tf.expand_dims(mask, -1),
+      "example_id": np.random.random(),
   }
 
 
