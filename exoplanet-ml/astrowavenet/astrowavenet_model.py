@@ -72,6 +72,7 @@ class AstroWaveNet(object):
     self.autoregressive_input = features["autoregressive_input"]
     self.conditioning_stack = features["conditioning_stack"]
     self.weights = features.get("weights")
+    tf.identity(features["example_id"], "example_id")
 
     self.network_output = None  # Sum of skip connections from dilation stack.
     self.dist_params = None  # Dict of predicted distribution parameters.
@@ -243,6 +244,8 @@ class AstroWaveNet(object):
     elif self.hparams.output_distribution.type == "normal":
       loc_scale = self.dist_params_layer(network_output, num_dists * 2)
       loc, scale = tf.split(loc_scale, 2, axis=-1)
+      loc = tf.identity(loc, 'loc')
+      scale = tf.identity(scale, 'scale')
       # Ensure scale is positive.
       scale = tf.nn.softplus(scale) + self.hparams.output_distribution.min_scale
       dist = tfp.distributions.Normal(loc, scale)
@@ -284,6 +287,7 @@ class AstroWaveNet(object):
           tf.ones_like(quantized_target) * (num_classes - 1), quantized_target)
       autoregressive_target = quantized_target
 
+    autoregressive_target = tf.identity(autoregressive_target, "target")
     log_prob = self.predicted_distributions.log_prob(autoregressive_target)
 
     weights = self.weights
