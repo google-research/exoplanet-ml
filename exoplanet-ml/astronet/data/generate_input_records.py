@@ -33,7 +33,7 @@ The downloaded CSV file should contain at least the following column names:
   tce_plnt_num: TCE number within the target star.
   tce_period: Orbital period of the detected event, in days.
   tce_time0bk: The time corresponding to the center of the first detected
-      traisit in Barycentric Julian Day (BJD) minus a constant offset of
+      transit in Barycentric Julian Day (BJD) minus a constant offset of
       2,454,833.0 days.
   tce_duration: Duration of the detected transit, in hours.
   av_training_set: Autovetter training set label; one of PC (planet candidate),

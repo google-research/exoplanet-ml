@@ -84,7 +84,7 @@ class AstroWaveNet(object):
     self.global_step = None  # Global step Tensor.
 
   def causal_conv_layer(self, x, output_size, kernel_width, dilation_rate=1):
-    """Applies a dialated causal convolution to the input.
+    """Applies a dilated causal convolution to the input.
 
     Args:
       x: tf.Tensor; Input tensor.
@@ -119,7 +119,7 @@ class AstroWaveNet(object):
     return conv_1x1_op(x)
 
   def gated_residual_layer(self, x, dilation_rate):
-    """Creates a gated, dilated convolutional layer with a residual connnection.
+    """Creates a gated, dilated convolutional layer with a residual connection.
 
     Args:
       x: tf.Tensor; Input tensor
@@ -159,7 +159,7 @@ class AstroWaveNet(object):
 
     This consists of:
       1) An initial causal convolution,
-      2) The dialation stack, and
+      2) The dilation stack, and
       3) Summing of skip connections
 
     The network output can then be used to predict various output distributions.

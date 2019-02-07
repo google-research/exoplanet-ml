@@ -26,7 +26,7 @@ def kepler_spline(time, flux, bkspace=1.5, maxiter=5, outlier_cut=3):
   """Computes a best-fit spline curve for a light curve segment.
 
   The spline is fit using an iterative process to remove outliers that may cause
-  the spline to be "pulled" by discrepent points. In each iteration the spline
+  the spline to be "pulled" by discrepant points. In each iteration the spline
   is fit, and if there are any points where the absolute deviation from the
   median residual is at least 3*sigma (where sigma is a robust estimate of the
   standard deviation of the residuals), those points are removed and the spline
@@ -195,7 +195,7 @@ def choose_kepler_spline(all_time,
     ]
     return best_spline, metadata
 
-  # Compute the median absoute deviation as a robust estimate of sigma. The
+  # Compute the median absolute deviation as a robust estimate of sigma. The
   # conversion factor of 1.48 takes the median absolute deviation to the
   # standard deviation of a normal distribution. See, e.g.
   # https://www.mathworks.com/help/stats/mad.html.
