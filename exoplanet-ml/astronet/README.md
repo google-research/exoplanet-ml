@@ -1,4 +1,4 @@
-# AstroNet: A Neural Network for Identifying Exoplanets in Light Curves
+# Astr Net: A Neural Network for Identifying Exoplanets in Light Curves
 
 ![Transit Animation](docs/transit.gif)
 
