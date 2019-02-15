@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Generates synthetic light curves with periodic transit-like dips.
 
 See class docstring below for more information.
@@ -55,8 +54,9 @@ class SyntheticTransitMaker(object):
                noise_sd_range=(0.1, 0.1)):
 
     if threshold_ratio_range[0] < 0 or threshold_ratio_range[1] >= 1:
-      raise ValueError("Threshold ratio range must be in [0, 1). Got: {}."
-                       .format(threshold_ratio_range))
+      raise ValueError(
+          "Threshold ratio range must be in [0, 1). Got: {}.".format(
+              threshold_ratio_range))
     if amplitude_range[0] <= 0:
       raise ValueError(
           "Amplitude range must only contain positive numbers. Got: {}.".format(

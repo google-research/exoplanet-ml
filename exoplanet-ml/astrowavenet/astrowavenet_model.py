@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """A TensorFlow WaveNet model for generative modeling of light curves.
 
 Implementation based on "WaveNet: A Generative Model of Raw Audio":
@@ -244,8 +243,8 @@ class AstroWaveNet(object):
     elif self.hparams.output_distribution.type == "normal":
       loc_scale = self.dist_params_layer(network_output, num_dists * 2)
       loc, scale = tf.split(loc_scale, 2, axis=-1)
-      loc = tf.identity(loc, 'loc')
-      scale = tf.identity(scale, 'scale')
+      loc = tf.identity(loc, "loc")
+      scale = tf.identity(scale, "scale")
       # Ensure scale is positive.
       scale = tf.nn.softplus(scale) + self.hparams.output_distribution.min_scale
       dist = tfp.distributions.Normal(loc, scale)
