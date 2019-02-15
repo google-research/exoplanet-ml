@@ -115,9 +115,6 @@ def _create_run_config():
   }
 
   if FLAGS.use_tpu:
-    if not FLAGS.master:
-      raise ValueError("FLAGS.master must be set for TPUEstimator.")
-
     tpu_config = tf.contrib.tpu.TPUConfig(
         iterations_per_loop=FLAGS.tpu_iterations_per_loop,
         num_shards=FLAGS.tpu_num_shards,
