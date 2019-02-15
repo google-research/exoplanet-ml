@@ -25,10 +25,10 @@ import tensorflow as tf
 
 from astrowavenet import astrowavenet_model
 from astrowavenet import configurations
-from astrowavenet import visualization_hooks
 from astrowavenet.data import kepler_light_curves
 from astrowavenet.data import synthetic_transits
 from astrowavenet.util import estimator_util
+from astrowavenet.util import visualization_hooks
 from tf_util import config_util
 from tf_util import configdict
 from tf_util import estimator_runner

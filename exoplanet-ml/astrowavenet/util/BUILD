@@ -8,3 +8,11 @@ py_library(
     srcs_version = "PY2AND3",
     deps = ["//astronet/ops:training"],
 )
+
+py_library(
+    name = "visualization_hooks",
+    srcs = [
+        "visualization_hooks.py",
+    ],
+    srcs_version = "PY2AND3",
+)
