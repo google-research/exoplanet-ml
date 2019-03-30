@@ -34,6 +34,7 @@ def base():
               "global_view": {
                   "length": 2001,
                   "is_time_series": True,
+                  "ndims": 1,
               },
           },
 

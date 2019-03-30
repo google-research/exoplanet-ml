@@ -61,12 +61,12 @@ def local_global():
       "local_view": {
           "length": 201,
           "is_time_series": True,
+          "ndims": 1,
       },
       "global_view": {
           "length": 2001,
-          "name_in_proto": "light_curve",
           "is_time_series": True,
-          "data_source": "",
+          "ndims": 1,
       },
   }
 

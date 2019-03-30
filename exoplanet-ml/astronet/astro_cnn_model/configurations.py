@@ -59,10 +59,12 @@ def local_global():
       "local_view": {
           "length": 201,
           "is_time_series": True,
+          "ndims": 11,
       },
       "global_view": {
           "length": 2001,
           "is_time_series": True,
+          "ndims": 11,
       },
   }
 
