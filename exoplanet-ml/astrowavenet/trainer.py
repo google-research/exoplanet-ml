@@ -172,12 +172,17 @@ def _create_eval_args(config_overrides=None):
     raise ValueError("Dataset '{}' requires --eval_steps for evaluation".format(
         FLAGS.dataset))
   input_fn = _create_input_fn(tf.estimator.ModeKeys.EVAL, config_overrides)
-  return {FLAGS.eval_name: (input_fn, FLAGS.eval_steps)}
+  return [{
+      "input_fn": input_fn,
+      "name": FLAGS.eval_name,
+      "steps": FLAGS.eval_steps,
+  }]
 
 
 def main(argv):
   del argv  # Unused.
 
+  # Parse configs.
   config = configdict.ConfigDict(configurations.get_config(FLAGS.config_name))
   config_overrides = json.loads(FLAGS.config_overrides)
   for key in config_overrides:

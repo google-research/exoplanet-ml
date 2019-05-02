@@ -26,11 +26,9 @@ def evaluate(estimator, eval_args):
 
   Args:
     estimator: Instance of tf.Estimator.
-    eval_args: Dictionary of {eval_name: (input_fn, eval_steps)} where eval_name
-      is the name of the evaluation set (e.g. "train" or "val"), input_fn is an
-      input function returning a tuple (features, labels), and eval_steps is the
-      number of steps for which to evaluate the model (if None, evaluates until
-      input_fn raises an end-of-input exception).
+    eval_args: List of dicts specifying the evaluation sets to evaluate over.
+      The dict entries are the arguments to Estimator.evaluate(). Must contain
+      "input_fn" and "name".
 
   Returns:
     global_step: The global step of the checkpoint evaluated.
@@ -42,18 +40,18 @@ def evaluate(estimator, eval_args):
   global_step = None
   values = {}
 
-  latest_checkpoint = estimator.latest_checkpoint()
-  if not latest_checkpoint:
+  checkpoint = estimator.latest_checkpoint()
+  if not checkpoint:
     # This is expected if the training job has not yet saved a checkpoint.
     tf.logging.info("No checkpoint in %s, skipping evaluation.",
                     estimator.model_dir)
     return global_step, values
 
-  tf.logging.info("Starting evaluation on checkpoint %s", latest_checkpoint)
+  tf.logging.info("Starting evaluation on checkpoint %s", checkpoint)
   try:
-    for eval_name, (input_fn, eval_steps) in eval_args.items():
-      values[eval_name] = estimator.evaluate(
-          input_fn, steps=eval_steps, name=eval_name)
+    for args in eval_args:
+      eval_name = args["name"]
+      values[eval_name] = estimator.evaluate(checkpoint_path=checkpoint, **args)
       if global_step is None:
         global_step = values[eval_name].get("global_step")
   except tf.errors.NotFoundError:
@@ -61,7 +59,7 @@ def evaluate(estimator, eval_args):
     # trainer process. Increasing RunConfig.keep_checkpoint_max may prevent this
     # in some cases.
     tf.logging.info("Checkpoint %s no longer exists, skipping evaluation.",
-                    latest_checkpoint)
+                    checkpoint)
 
   return global_step, values
 
@@ -75,11 +73,9 @@ def continuous_eval(estimator,
 
   Args:
     estimator: Instance of tf.Estimator.
-    eval_args: Dictionary of {eval_name: (input_fn, eval_steps)} where eval_name
-      is the name of the evaluation set (e.g. "train" or "val"), input_fn is an
-      input function returning a tuple (features, labels), and eval_steps is the
-      number of steps for which to evaluate the model (if None, evaluates until
-      input_fn raises an end-of-input exception).
+    eval_args: List of dicts specifying the evaluation sets to evaluate over.
+      The dict entries are the arguments to Estimator.evaluate(). Must contain
+      "input_fn" and "name"
     train_steps: The number of steps the model will train for. This function
       will terminate once the model has finished training.
     timeout_secs: Number of seconds to wait for new checkpoints. If None, wait
@@ -113,11 +109,9 @@ def continuous_train_and_eval(estimator,
   Args:
     estimator: Instance of tf.Estimator.
     train_input_fn: Input function returning a tuple (features, labels).
-    eval_args: Dictionary of {eval_name: (input_fn, eval_steps)} where eval_name
-      is the name of the evaluation set (e.g. "train" or "val"), input_fn is an
-      input function returning a tuple (features, labels), and eval_steps is the
-      number of steps for which to evaluate the model (if None, evaluates until
-      input_fn raises an end-of-input exception).
+    eval_args: List of dicts specifying the evaluation sets to evaluate over.
+      The dict entries are the arguments to Estimator.evaluate(). Must contain
+      "input_fn" and "name"
     local_eval_frequency: The number of training steps between evaluations. If
       None, trains until train_input_fn raises an end-of-input exception.
     train_hooks: List of SessionRunHook subclass instances. Used for callbacks
