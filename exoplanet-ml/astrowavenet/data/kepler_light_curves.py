@@ -22,29 +22,32 @@ import tensorflow as tf
 
 from astrowavenet.data import base
 
-COND_INPUT_KEY = "mask"
-AR_INPUT_KEY = "flux"
+
+def parse_example(serialized):
+  """Parses a single tf.Example proto."""
+  features = tf.parse_single_example(
+      serialized,
+      features={
+          "time": tf.VarLenFeature(tf.float32),
+          "flux": tf.VarLenFeature(tf.float32),
+          "mask": tf.VarLenFeature(tf.int64),
+          "kepler_id": tf.FixedLenFeature([], dtype=tf.int64)
+      })
+  # Extract values from SparseTensor objects.
+  time = features["time"].values
+  autoregressive_input = features["flux"].values
+  conditioning_stack = tf.to_float(features["mask"].values)
+  example_id = tf.cast(features["kepler_id"], dtype=tf.int32)
+  return {
+      "time": time,
+      "autoregressive_input": autoregressive_input,
+      "conditioning_stack": conditioning_stack,
+      "example_id": example_id,
+  }
 
 
 class KeplerLightCurves(base.TFRecordDataset):
   """Kepler light curve inputs to the AstroWaveNet model."""
 
   def create_example_parser(self):
-
-    def _example_parser(serialized):
-      """Parses a single tf.Example proto."""
-      features = tf.parse_single_example(
-          serialized,
-          features={
-              AR_INPUT_KEY: tf.VarLenFeature(tf.float32),
-              COND_INPUT_KEY: tf.VarLenFeature(tf.int64),
-          })
-      # Extract values from SparseTensor objects.
-      autoregressive_input = features[AR_INPUT_KEY].values
-      conditioning_stack = tf.to_float(features[COND_INPUT_KEY].values)
-      return {
-          "autoregressive_input": autoregressive_input,
-          "conditioning_stack": conditioning_stack,
-      }
-
-    return _example_parser
+    return parse_example

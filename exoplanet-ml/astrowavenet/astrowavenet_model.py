@@ -66,13 +66,16 @@ class AstroWaveNet(object):
     ]
     if mode not in valid_modes:
       raise ValueError("Expected mode in {}. Got: {}".format(valid_modes, mode))
+    self.features = features
     self.hparams = hparams
     self.mode = mode
 
-    self.autoregressive_input = features["autoregressive_input"]
-    self.conditioning_stack = features["conditioning_stack"]
-    self.weights = features.get("weights")
+    # Input Tensors.
+    self.autoregressive_input = None
+    self.conditioning_stack = None
+    self.weights = None
 
+    # Model Tensors.
     self.network_output = None  # Sum of skip connections from dilation stack.
     self.dist_params = None  # Dict of predicted distribution parameters.
     self.predicted_distributions = None  # Predicted distribution for examples.
@@ -82,6 +85,25 @@ class AstroWaveNet(object):
     self.num_nonzero_weight_examples = None  # Number of examples in batch.
     self.total_loss = None  # Overall loss for the batch.
     self.global_step = None  # Global step Tensor.
+
+  def build_inputs(self):
+    """Builds the input Tensors.
+
+    Inputs:
+      self.features
+
+    Outputs:
+      self.autoregressive_input
+      self.conditioning_stack
+      self.weights
+    """
+    self.autoregressive_input = self.features["autoregressive_input"]
+    self.conditioning_stack = self.features["conditioning_stack"]
+
+    weights = self.features.get("weights")
+    if weights is None:
+      weights = tf.ones_like(self.autoregressive_input)
+    self.weights = weights
 
   def causal_conv_layer(self, x, output_size, kernel_width, dilation_rate=1):
     """Applies a dilated causal convolution to the input.
@@ -245,6 +267,9 @@ class AstroWaveNet(object):
       loc, scale = tf.split(loc_scale, 2, axis=-1)
       # Ensure scale is positive.
       scale = tf.nn.softplus(scale) + self.hparams.output_distribution.min_scale
+      # Give loc and scale explicit names in the graph.
+      loc = tf.identity(loc, "loc")
+      scale = tf.identity(scale, "scale")
       dist = tfp.distributions.Normal(loc, scale)
       dist_params = {"loc": loc, "scale": scale}
     else:
@@ -284,18 +309,16 @@ class AstroWaveNet(object):
           tf.ones_like(quantized_target) * (num_classes - 1), quantized_target)
       autoregressive_target = quantized_target
 
+    autoregressive_target = tf.identity(autoregressive_target, "target")
     log_prob = self.predicted_distributions.log_prob(autoregressive_target)
 
-    weights = self.weights
-    if weights is None:
-      weights = tf.ones_like(log_prob)
-    weights_dim = len(weights.shape)
+    weights_dim = len(self.weights.shape)
     per_example_weight = tf.reduce_sum(
-        weights, axis=list(range(1, weights_dim)))
+        self.weights, axis=list(range(1, weights_dim)))
     per_example_indicator = tf.to_float(tf.greater(per_example_weight, 0))
     num_examples = tf.reduce_sum(per_example_indicator)
 
-    batch_losses = -log_prob * weights
+    batch_losses = -log_prob * self.weights
     losses_ndims = batch_losses.shape.ndims
     per_example_loss_sum = tf.reduce_sum(
         batch_losses, axis=list(range(1, losses_ndims)))
@@ -313,9 +336,7 @@ class AstroWaveNet(object):
   def build(self):
     """Creates all ops for training, evaluation or inference."""
     self.global_step = tf.train.get_or_create_global_step()
-
+    self.build_inputs()
     self.build_network()
     self.build_predictions()
-
-    if self.mode in [tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL]:
-      self.build_losses()
+    self.build_losses()

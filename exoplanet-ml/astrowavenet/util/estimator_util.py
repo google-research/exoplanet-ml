@@ -89,13 +89,28 @@ class _ModelFn(object):
       train_op = training.create_train_op(model, optimizer)
 
     if use_tpu:
-      estimator = tf.contrib.tpu.TPUEstimatorSpec(
-          mode=mode, loss=model.total_loss, train_op=train_op)
+      estimator_spec = tf.contrib.tpu.TPUEstimatorSpec
     else:
-      estimator = tf.estimator.EstimatorSpec(
-          mode=mode, loss=model.total_loss, train_op=train_op)
+      estimator_spec = tf.estimator.EstimatorSpec
 
-    return estimator
+    # Predictions are the Tensors produced by Estimator.predict(). Losses and
+    # targets make sense even in predict mode because the model is
+    # autoregressive.
+    predictions = {
+        "target": model.autoregressive_target,
+        "seq_weights": model.weights,
+        "seq_losses": model.batch_losses,
+        "mean_loss": model.per_example_loss,
+        "network_output": model.network_output,
+    }
+    predictions.update(model.features)
+    predictions.update(model.dist_params)
+
+    return estimator_spec(
+        mode=mode,
+        predictions=predictions,
+        loss=model.total_loss,
+        train_op=train_op)
 
 
 def create_model_fn(model_class, hparams, use_tpu=False):
@@ -140,18 +155,13 @@ def create_estimator(model_class,
 
   Raises:
     ValueError:
-      If model_dir is not passed explicitly or in run_config.model_dir, or if
-      eval_batch_size is specified and run_config is not a
+      If eval_batch_size is specified and run_config is not a
       tf.contrib.tpu.RunConfig.
   """
   if run_config is None:
     run_config = tf.estimator.RunConfig()
   else:
     run_config = copy.deepcopy(run_config)
-
-  if not model_dir and not run_config.model_dir:
-    raise ValueError(
-        "model_dir must be passed explicitly or specified in run_config")
 
   use_tpu = isinstance(run_config, tf.contrib.tpu.RunConfig)
   model_fn = create_model_fn(model_class, hparams, use_tpu)
