@@ -21,17 +21,17 @@ py_test(
 )
 
 py_library(
-    name = "median_filter",
-    srcs = ["median_filter.py"],
+    name = "binning",
+    srcs = ["binning.py"],
     srcs_version = "PY2AND3",
 )
 
 py_test(
-    name = "median_filter_test",
+    name = "binning_test",
     size = "small",
-    srcs = ["median_filter_test.py"],
+    srcs = ["binning_test.py"],
     srcs_version = "PY2AND3",
-    deps = [":median_filter"],
+    deps = [":binning"],
 )
 
 py_library(

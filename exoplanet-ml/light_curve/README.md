@@ -6,8 +6,8 @@ Chris Shallue: [@cshallue](https://github.com/cshallue)
 
 ## Python modules
 
+* `binning`: Utility for binning and aggregating points in a light curve.
 * `kepler_io`: Functions for reading Kepler data.
-* `median_filter`: Utility for smoothing data using a median filter.
 * `periodic_event`: Event class, which represents a periodic event in a light curve.
 * `util`: Light curve utility functions.
 

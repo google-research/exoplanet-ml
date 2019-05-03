@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Utility function for smoothing data using a median filter."""
+"""Utility function for smoothing data by binning and aggregating."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -21,19 +21,26 @@ from __future__ import print_function
 import numpy as np
 
 
-def median_filter(x, y, num_bins, bin_width=None, x_min=None, x_max=None):
-  """Computes the median y-value in uniform intervals (bins) along the x-axis.
+def bin_and_aggregate(x,
+                      y,
+                      num_bins,
+                      bin_width=None,
+                      x_min=None,
+                      x_max=None,
+                      aggr_fn=None):
+  """Aggregates y-values in uniform intervals (bins) along the x-axis.
 
   The interval [x_min, x_max) is divided into num_bins uniformly spaced
-  intervals of width bin_width. The value computed for each bin is the median
-  of all y-values whose corresponding x-value is in the interval.
+  intervals of width bin_width. The value computed for each bin is the
+  aggregation of all y-values whose corresponding x-value is in the interval.
+  The default aggregation function is np.median.
 
   NOTE: x must be sorted in ascending order or the results will be incorrect.
 
   Args:
-    x: 1D array of x-coordinates sorted in ascending order. Must have at least 2
-      elements, and all elements cannot be the same value.
-    y: 1D array of y-coordinates with the same size as x.
+    x: 1D NumPy array of x-coordinates sorted in ascending order. Must have at
+      least 2 elements, and all elements cannot be the same value.
+    y: N-dimensional NumPy array with the same length as x.
     num_bins: The number of intervals to divide the x-axis into. Must be at
       least 2.
     bin_width: The width of each bin on the x-axis. Must be positive, and less
@@ -42,13 +49,14 @@ def median_filter(x, y, num_bins, bin_width=None, x_min=None, x_max=None):
       than or equal to the largest value of x. Defaults to min(x).
     x_max: The exclusive rightmost value to consider on the x-axis. Must be
       greater than x_min. Defaults to max(x).
+    aggr_fn: A function that will be called with signature aggr_fn(y, axis=0) to
+      aggregate values within each bin. Default is np.median.
 
   Returns:
-    1D NumPy array of size num_bins containing the median y-values of uniformly
-    spaced bins on the x-axis.
-
-  Raises:
-    ValueError: If an argument has an inappropriate value.
+    result: NumPy array of length num_bins containing the aggregated y-values of
+      uniformly spaced bins on the x-axis.
+    bin_counts: 1D NumPy array of length num_bins indicating the number of
+      points in each bin.
   """
   if num_bins < 2:
     raise ValueError("num_bins must be at least 2. Got: {}".format(num_bins))
@@ -83,8 +91,16 @@ def median_filter(x, y, num_bins, bin_width=None, x_min=None, x_max=None):
 
   bin_spacing = (x_max - x_min - bin_width) / (num_bins - 1)
 
-  # Bins with no y-values will fall back to the global median.
-  result = np.repeat(np.median(y), num_bins)
+  if aggr_fn is None:
+    aggr_fn = np.median
+
+  # Initialize output arrays.
+  # Ensure default_value is a floating point type, otherwise the aggregated
+  # values may unexpectedly be cast to a non-floating type.
+  default_dtype = y.dtype if isinstance(y.dtype, np.floating) else np.float
+  default_value = np.zeros_like(y[0], dtype=default_dtype)
+  result = np.repeat([default_value], num_bins, axis=0)
+  bin_counts = np.zeros(num_bins, dtype=np.int)
 
   # Find the first element of x >= x_min. This loop is guaranteed to produce
   # a valid index because we know that x_min <= x[-1].
@@ -92,7 +108,7 @@ def median_filter(x, y, num_bins, bin_width=None, x_min=None, x_max=None):
   while x[x_start] < x_min:
     x_start += 1
 
-  # The bin at index i is the median of all elements y[j] such that
+  # The bin at index i is the aggregation of all elements y[j] such that
   # bin_min <= x[j] < bin_max, where bin_min and bin_max are the endpoints of
   # bin i.
   bin_min = x_min  # Left endpoint of the current bin.
@@ -110,11 +126,12 @@ def median_filter(x, y, num_bins, bin_width=None, x_min=None, x_max=None):
       j_end += 1
 
     if j_end > j_start:
-      # Compute and insert the median bin value.
-      result[i] = np.median(y[j_start:j_end])
+      # Compute and insert the aggregate y value in the bin.
+      result[i] = aggr_fn(y[j_start:j_end], axis=0)
+      bin_counts[i] = j_end - j_start
 
     # Advance the bin.
     bin_min += bin_spacing
     bin_max += bin_spacing
 
-  return result
+  return result, bin_counts

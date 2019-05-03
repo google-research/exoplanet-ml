@@ -21,8 +21,8 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
+from light_curve import binning
 from light_curve import kepler_io
-from light_curve import median_filter
 from light_curve import util
 from tf_util import example_util
 from third_party.kepler_spline import kepler_spline
@@ -92,12 +92,12 @@ def process_light_curve(all_time, all_flux):
   return time, flux
 
 
-def phase_fold_and_sort_light_curve(time, flux, period, t0):
+def phase_fold_and_sort_light_curve(time, values, period, t0):
   """Phase folds a light curve and sorts by ascending time.
 
   Args:
     time: 1D NumPy array of time values.
-    flux: 1D NumPy array of flux values.
+    values: N-dimensional NumPy array with the same length as time.
     period: A positive real scalar; the period to fold over.
     t0: The center of the resulting folded vector; this value is mapped to 0.
 
@@ -105,7 +105,7 @@ def phase_fold_and_sort_light_curve(time, flux, period, t0):
     folded_time: 1D NumPy array of phase folded time values in
         [-period / 2, period / 2), where 0 corresponds to t0 in the original
         time array. Values are sorted in ascending order.
-    folded_flux: 1D NumPy array. Values are the same as the original input
+    folded_values: NumPy array. Values are the same as the original values
         array, but sorted by folded_time.
   """
   # Phase fold time.
@@ -114,18 +114,23 @@ def phase_fold_and_sort_light_curve(time, flux, period, t0):
   # Sort by ascending time.
   sorted_i = np.argsort(time)
   time = time[sorted_i]
-  flux = flux[sorted_i]
+  values = values[sorted_i]
 
-  return time, flux
+  return time, values
 
 
-def generate_view(time, flux, num_bins, bin_width, t_min, t_max,
+def generate_view(time,
+                  values,
+                  num_bins,
+                  bin_width,
+                  t_min,
+                  t_max,
                   normalize=True):
-  """Generates a view of a phase-folded light curve using a median filter.
+  """Generates a view of a phase-folded and binned light curve.
 
   Args:
-    time: 1D array of time values, sorted in ascending order.
-    flux: 1D array of flux values.
+    time: 1D NumPy array of time values, sorted in ascending order.
+    values: N-dimensional NumPy array with the same length as time.
     num_bins: The number of intervals to divide the time axis into.
     bin_width: The width of each bin on the time axis.
     t_min: The inclusive leftmost value to consider on the time axis.
@@ -133,39 +138,41 @@ def generate_view(time, flux, num_bins, bin_width, t_min, t_max,
     normalize: Whether to center the median at 0 and minimum value at -1.
 
   Returns:
-    1D NumPy array of size num_bins containing the median flux values of
-    uniformly spaced bins on the phase-folded time axis.
+    NumPy array of length num_bins containing the aggregated values in uniformly
+    spaced bins on the phase-folded time axis.
   """
-  view = median_filter.median_filter(time, flux, num_bins, bin_width, t_min,
-                                     t_max)
+  view, bin_counts = binning.bin_and_aggregate(time, values, num_bins,
+                                               bin_width, t_min, t_max)
+  # Empty bins fall back to the global median.
+  view = np.where(bin_counts > 0, view, np.median(values))
 
   if normalize:
-    view -= np.median(view)
-    view /= np.abs(np.min(view))
+    view -= np.median(view, axis=0)
+    view /= np.abs(np.min(view, axis=0))
 
   return view
 
 
-def global_view(time, flux, period, num_bins=2001, bin_width_factor=1 / 2001):
+def global_view(time, values, period, num_bins=2001, bin_width_factor=1 / 2001):
   """Generates a 'global view' of a phase folded light curve.
 
   See Section 3.3 of Shallue & Vanderburg, 2018, The Astronomical Journal.
   http://iopscience.iop.org/article/10.3847/1538-3881/aa9e09/meta
 
   Args:
-    time: 1D array of time values, sorted in ascending order.
-    flux: 1D array of flux values.
+    time: 1D NumPy array of time values, sorted in ascending order.
+    values: N-dimensional NumPy array with the same length as time.
     period: The period of the event (in days).
     num_bins: The number of intervals to divide the time axis into.
     bin_width_factor: Width of the bins, as a fraction of period.
 
   Returns:
-    1D NumPy array of size num_bins containing the median flux values of
-    uniformly spaced bins on the phase-folded time axis.
+    NumPy array of length num_bins containing the aggregated values in uniformly
+    spaced bins on the phase-folded time axis.
   """
   return generate_view(
       time,
-      flux,
+      values,
       num_bins=num_bins,
       bin_width=period * bin_width_factor,
       t_min=-period / 2,
@@ -173,7 +180,7 @@ def global_view(time, flux, period, num_bins=2001, bin_width_factor=1 / 2001):
 
 
 def local_view(time,
-               flux,
+               values,
                period,
                duration,
                num_bins=201,
@@ -185,8 +192,8 @@ def local_view(time,
   http://iopscience.iop.org/article/10.3847/1538-3881/aa9e09/meta
 
   Args:
-    time: 1D array of time values, sorted in ascending order.
-    flux: 1D array of flux values.
+    time: 1D NumPy array of time values, sorted in ascending order.
+    values: N-dimensional NumPy array with the same length as time.
     period: The period of the event (in days).
     duration: The duration of the event (in days).
     num_bins: The number of intervals to divide the time axis into.
@@ -195,12 +202,12 @@ def local_view(time,
       event is assumed to be centered at 0).
 
   Returns:
-    1D NumPy array of size num_bins containing the median flux values of
-    uniformly spaced bins on the phase-folded time axis.
+    NumPy array of length num_bins containing the aggregated values in uniformly
+    spaced bins on the phase-folded time axis.
   """
   return generate_view(
       time,
-      flux,
+      values,
       num_bins=num_bins,
       bin_width=duration * bin_width_factor,
       t_min=max(-period / 2, -duration * num_durations),

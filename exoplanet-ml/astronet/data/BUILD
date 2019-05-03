@@ -12,8 +12,8 @@ py_library(
     name = "preprocess",
     srcs = ["preprocess.py"],
     deps = [
+        "//light_curve:binning",
         "//light_curve:kepler_io",
-        "//light_curve:median_filter",
         "//light_curve:util",
         "//tf_util:example_util",
         "//third_party/kepler_spline",
