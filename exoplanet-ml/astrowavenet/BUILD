@@ -22,18 +22,7 @@ py_binary(
         "//tf_util:config_util",
         "//tf_util:configdict",
         "//tf_util:estimator_runner",
-    ] + select({
-        # Link TPU dependencies if --define=tpu_hardware=true.
-        # This allows the trainer to run directly on a TPU host without
-        # needing a coordinator.
-        ":tpu_executor_hardware_mode": [
-            "//learning/brain/google/xla:jellyfish_hardware_device",
-            # For Xprof profiling:
-            # "//perftools/gputools/profiler:jfprof_lib",
-            # "//perftools/gputools/profiler:xprofilez_with_server",
-        ],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 py_library(
