@@ -90,6 +90,7 @@ class _ShardedDatasetBuilder(DatasetBuilder):
         "shuffle_values_buffer": 1000,
         "num_parallel_parser_calls": 4,
         "batches_buffer_size": None,  # Defaults to max(1, 256 / batch_size).
+        "excluded_examples": [],
     })
     return config
 
@@ -176,6 +177,16 @@ class _ShardedDatasetBuilder(DatasetBuilder):
     dataset = dataset.map(
         self.create_example_parser(),
         num_parallel_calls=self.config.num_parallel_parser_calls)
+
+    # Filter the dataset.
+    if self.config.excluded_examples:
+
+      def include_example(example):
+        example_is_excluded = tf.reduce_any(
+            tf.equal(example["example_id"], self.config.excluded_examples))
+        return tf.math.logical_not(example_is_excluded)
+
+      dataset = dataset.filter(include_example)
 
     def _prepare_wavenet_inputs(features):
       """Validates features, and clips lengths and adds weights if needed."""
