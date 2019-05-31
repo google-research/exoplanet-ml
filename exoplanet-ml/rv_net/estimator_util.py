@@ -50,8 +50,8 @@ class ModelFn(object):
     # Possibly create train_op.
     train_op = None
     if mode == tf.estimator.ModeKeys.TRAIN:
-      learning_rate = create_learning_rate(hparams, model.global_step)
-      optimizer = training.create_optimizer(hparams, learning_rate)
+      learning_rate = create_learning_rate(self.hparams, model.global_step)
+      optimizer = training.create_optimizer(self.hparams, learning_rate)
       train_op = training.create_train_op(model, optimizer)
 
     return tf.estimator.EstimatorSpec(
