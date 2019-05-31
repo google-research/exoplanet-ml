@@ -43,22 +43,22 @@ class RvModel(object):
         # Reshape [length] -> [length, 1].
         net = tf.expand_dims(net, -1)
 
-        for i in hparams.conv_block_filters:
+        for i in self.hparams.conv_block_filters:
             for _ in range(hparams.conv_layers_per_block):
-                conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=hparams.kernel_size, padding='same',
+                conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=self.hparams.kernel_size, padding='same',
                                                  activation=tf.nn.relu)
                 net = conv_op(net)
             max_pool = tf.keras.layers.MaxPool1D(pool_size=2, strides=2)
             net = max_pool(net)
 
-        for i in hparams.final_conv_num_filters:
-            conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=hparams.kernel_size, padding='same',
+        for i in self.hparams.final_conv_num_filters:
+            conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=self.hparams.kernel_size, padding='same',
                                              activation=tf.nn.relu)
             net = conv_op(net)
             flatten = tf.keras.layers.Flatten()
             net = flatten(net)
 
-        for i in hparams.dense_num_layers:
+        for i in self.hparams.dense_num_layers:
             dense = tf.keras.layers.Dense(i, activation=tf.nn.relu)
             net = dense(net)
 
