@@ -44,7 +44,7 @@ class RvModel(object):
         net = tf.expand_dims(net, -1)
 
         for i in self.hparams.conv_block_filters:
-            for _ in range(hparams.conv_layers_per_block):
+            for _ in range(self.hparams.conv_layers_per_block):
                 conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=self.hparams.kernel_size, padding='same',
                                                  activation=tf.nn.relu)
                 net = conv_op(net)
