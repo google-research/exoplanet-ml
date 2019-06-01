@@ -31,7 +31,7 @@ def create_learning_rate(hparams, global_step):
 
 
 def sum_metric(values, name=None):
-  with variable_scope.variable_scope(name, 'sum', (values,)):
+  with tf.variable_scope(name, 'sum', (values,)):
     values = tf.cast(values, tf.float32)
     total = tf.get_variable(
         'total',
