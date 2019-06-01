@@ -60,9 +60,12 @@ class ModelFn(object):
     eval_metrics = None
     if mode == tf.estimator.ModeKeys.EVAL:
       eval_metrics = {
-        "rmse": tf.metrics.root_mean_squared_error(model.label, model.predicted_rv),
-        "root_mean_label": tf.metrics.root_mean_squared_error(model.label, 0.0),
-        "root_mean_pred": tf.metrics.root_mean_squared_error(model.predicted_rv, 0.0),
+        "rmse": tf.metrics.root_mean_squared_error(
+            model.label, model.predicted_rv),
+        "root_mean_label": tf.metrics.root_mean_squared_error(
+            model.label, tf.zeros_like(model.label)),
+        "root_mean_pred": tf.metrics.root_mean_squared_error(
+            model.predicted_rv, tf.zeros_like(model.predicted_rv)),
       }
 
     return tf.estimator.EstimatorSpec(
@@ -71,4 +74,3 @@ class ModelFn(object):
         loss=model.total_loss,
         train_op=train_op,
 	eval_metric_ops=eval_metrics)
-
