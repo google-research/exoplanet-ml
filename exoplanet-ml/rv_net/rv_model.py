@@ -62,17 +62,16 @@ class RvModel(object):
             dense = tf.keras.layers.Dense(i, activation=tf.nn.relu)
             net = dense(net)
 
-        # last output layer
+        # output layer
         output = tf.keras.layers.Dense(1)
-        net = output(net)
+        net = tf.squeeze(output(net))
 
         self.predicted_rv = net
 
     def build_losses(self):
         """Builds the training losses."""
-        self.batch_losses = (self.label - self.predicted_rv) ** 2
-        self.num_examples = tf.shape(self.label)[0]
-        self.total_loss = tf.reduce_sum(self.batch_losses) / tf.cast(self.num_examples, tf.float32)
+        self.batch_losses = tf.squared_difference(self.predicted_rv, self.label)
+        self.total_loss = tf.reduce_mean(self.batch_losses)
 
     def build(self):
         """Creates all ops for training, evaluation or inference."""
