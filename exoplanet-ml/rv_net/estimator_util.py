@@ -32,10 +32,10 @@ def create_learning_rate(hparams, global_step):
 
 def sum_metric(values, name=None):
   with tf.variable_scope(name, 'sum', (values,)):
-    values = tf.cast(values, tf.float32)
+    values = tf.convert_to_tensor(values)
     total = tf.get_variable(
         'total',
-        initializer=tf.zeros([], dtype=tf.float32),
+        initializer=tf.zeros([], dtype=values.dtype),
         trainable=False,
         collections=[tf.GraphKeys.LOCAL_VARIABLES,
                      tf.GraphKeys.METRIC_VARIABLES])
@@ -73,7 +73,7 @@ class ModelFn(object):
     eval_metrics = None
     if mode == tf.estimator.ModeKeys.EVAL:
       eval_metrics = {
-        "num_examples": sum_metric(tf.ones_like(model.label)),
+        "num_examples": sum_metric(tf.ones_like(model.label, dtype=tf.int32)),
         "num_eval_batches": sum_metric(1),
         "rmse": tf.metrics.root_mean_squared_error(
             model.label, model.predicted_rv),
