@@ -56,8 +56,19 @@ class ModelFn(object):
       optimizer = training.create_optimizer(self.hparams, learning_rate)
       train_op = training.create_train_op(model, optimizer)
 
+    # Possibly create evaluation metrics.
+    eval_metrics = None
+    if mode == tf.estimator.ModeKeys.EVAL:
+      eval_metrics = {
+        "rmse": tf.metrics.root_mean_squared_error(model.label, model.predicted_rv),
+        "root_mean_label": tf.metrics.root_mean_squared_error(model.label, 0.0),
+        "root_mean_pred": tf.metrics.root_mean_squared_error(model.predicted_rv, 0.0),
+      }
+
     return tf.estimator.EstimatorSpec(
         mode=mode,
         predictions=model.predicted_rv,
         loss=model.total_loss,
-        train_op=train_op)
+        train_op=train_op,
+	eval_metric_ops=eval_metrics)
+
