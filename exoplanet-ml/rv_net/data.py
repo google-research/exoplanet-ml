@@ -58,9 +58,7 @@ class DatasetBuilder(object):
             parsed_fields = tf.parse_single_example(serialized_example, features=data_fields)
             ccf_data = parsed_fields[self.hparams.ccf_feature_name]
             label = parsed_fields[self.hparams.label_feature_name]
-            # Possibly rescale the label.
-            label_rescale_factor = self.hparams.get("label_rescale_factor", 1)
-            label *= label_rescale_factor
+            label *= self.hparams.label_rescale_factor  # Rescale the label.
             return {
                 "ccf_data": ccf_data,
                 "label": label,
