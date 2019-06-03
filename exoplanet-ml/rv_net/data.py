@@ -59,7 +59,7 @@ class DatasetBuilder(object):
             ccf_data = parsed_fields[self.hparams.ccf_feature_name]
             label = parsed_fields[self.hparams.label_feature_name]
             # Possibly rescale the label.
-            label_rescale_factor = self.hparams.get("label_rescale_factor", 1):
+            label_rescale_factor = self.hparams.get("label_rescale_factor", 1)
             label *= label_rescale_factor
             return {
                 "ccf_data": ccf_data,
