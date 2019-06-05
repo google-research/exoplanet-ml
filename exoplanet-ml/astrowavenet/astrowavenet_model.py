@@ -270,8 +270,38 @@ class AstroWaveNet(object):
       # Give loc and scale explicit names in the graph.
       loc = tf.identity(loc, "loc")
       scale = tf.identity(scale, "scale")
-      dist = tfp.distributions.Normal(loc, scale)
       dist_params = {"loc": loc, "scale": scale}
+      if self.hparams.output_distribution.predict_outlier_distribution:
+        # Create scalar variables representing the probability of each point
+        # being an outlier, the mean of the outlier Gaussian distribution, and
+        # the standard deviation.
+        for name, initial_value in [("outlier_prob", 0.5), ("outlier_loc", 0),
+                                    ("outlier_scale", 1)]:
+          var = tf.keras.backend.variable(
+              [initial_value] * num_dists, dtype=tf.float32, name=name)
+          # Wrapping in a tf.identity allows values to be fed in unit tests.
+          dist_params[name] = tf.identity(var)
+
+        # Replicate the outlier probability, mean, and standard deviation across
+        # all points in all light curves.
+        mask = tf.ones_like(loc)
+        outlier_prob = mask * dist_params["outlier_prob"]
+        outlier_loc = mask * dist_params["outlier_loc"]
+        outlier_scale = mask * dist_params["outlier_scale"]
+
+        # Create the categorical probabilities and the mean and standard
+        # deviation of the Gaussian mixture.
+        mixture_probs = tf.stack([1 - outlier_prob, outlier_prob], axis=-1)
+        mixture_loc = tf.stack([loc, outlier_loc], axis=-1)
+        mixture_scale = tf.stack([scale, outlier_scale], axis=-1)
+
+        dist = tfp.distributions.MixtureSameFamily(
+            mixture_distribution=tf.distributions.Categorical(
+                probs=mixture_probs),
+            components_distribution=tfp.distributions.Normal(
+                mixture_loc, mixture_scale))
+      else:
+        dist = tfp.distributions.Normal(loc, scale)
     else:
       raise ValueError("Unsupported distribution type {}".format(
           self.hparams.output_distribution.type))
