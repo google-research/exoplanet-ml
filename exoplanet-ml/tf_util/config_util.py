@@ -53,7 +53,7 @@ def parse_json(json_string_or_file):
                        "Parsing error: {}.".format(
                            json_string_or_file,
                            json_file_parsing_error.message))
-    except tf.gfile.FileError:
+    except:
       message = ("Unable to parse the input parameter neither as literal "
                  "JSON nor as the name of a file that exists.\n"
                  "JSON parsing error: {}\n\n Input parameter:\n{}.".format(
