@@ -271,7 +271,9 @@ class AstroWaveNet(object):
       loc = tf.identity(loc, "loc")
       scale = tf.identity(scale, "scale")
       dist_params = {"loc": loc, "scale": scale}
-      if self.hparams.output_distribution.predict_outlier_distribution:
+      predict_outlier_distribution = self.hparams.output_distribution.get(
+          "predict_outlier_distribution", False)
+      if predict_outlier_distribution:
         # Create scalar variables representing the probability of each point
         # being an outlier, the mean of the outlier Gaussian distribution, and
         # the standard deviation.
@@ -296,7 +298,7 @@ class AstroWaveNet(object):
         mixture_scale = tf.stack([scale, outlier_scale], axis=-1)
 
         dist = tfp.distributions.MixtureSameFamily(
-            mixture_distribution=tf.distributions.Categorical(
+            mixture_distribution=tfp.distributions.Categorical(
                 probs=mixture_probs),
             components_distribution=tfp.distributions.Normal(
                 mixture_loc, mixture_scale))
