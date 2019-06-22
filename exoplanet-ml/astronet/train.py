@@ -113,9 +113,7 @@ def main(_):
         file_pattern=FLAGS.eval_files,
         input_config=config.inputs,
         mode=tf.estimator.ModeKeys.EVAL)
-    eval_args = {
-        "val": (eval_input_fn, None)  # eval_name: (input_fn, eval_steps)
-    }
+    eval_args = [{"name": "val", "input_fn": eval_input_fn}]
 
     for _ in estimator_runner.continuous_train_and_eval(
         estimator=estimator,
