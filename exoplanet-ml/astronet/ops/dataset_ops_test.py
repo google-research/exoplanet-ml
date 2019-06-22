@@ -34,6 +34,7 @@ flags.DEFINE_string("test_srcdir", "", "Test source directory.")
 _TEST_TFRECORD_FILE = "astronet/ops/test_data/test_dataset.tfrecord"
 
 
+# TODO(shallue): add tests with subcomponents, including with reversing.
 class DatasetOpsTest(tf.test.TestCase):
 
   def testPadTensorToBatchSize(self):
@@ -275,16 +276,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 1.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[100], [101], [102], [103]],
                                            f["aux_features"]["aux_feature"])
@@ -292,16 +293,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 2.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[104], [105], [106], [107]],
                                            f["aux_features"]["aux_feature"])
@@ -309,12 +310,12 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 3.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[108], [109]],
                                            f["aux_features"]["aux_feature"])
@@ -449,16 +450,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 1.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [7, 6, 5, 4, 3, 2, 1, 0],
-          [7, 6, 5, 4, 3, 2, 1, 0],
-          [7, 6, 5, 4, 3, 2, 1, 0],
-          [7, 6, 5, 4, 3, 2, 1, 0],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [3, 2, 1, 0],
-          [3, 2, 1, 0],
-          [3, 2, 1, 0],
-          [3, 2, 1, 0],
+          [[3], [2], [1], [0]],
+          [[3], [2], [1], [0]],
+          [[3], [2], [1], [0]],
+          [[3], [2], [1], [0]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[100], [101], [102], [103]],
                                            f["aux_features"]["aux_feature"])
@@ -466,16 +467,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 2.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [7, 6, 5, 4, 3, 2, 1, 0],
-          [7, 6, 5, 4, 3, 2, 1, 0],
-          [7, 6, 5, 4, 3, 2, 1, 0],
-          [7, 6, 5, 4, 3, 2, 1, 0],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [3, 2, 1, 0],
-          [3, 2, 1, 0],
-          [3, 2, 1, 0],
-          [3, 2, 1, 0],
+          [[3], [2], [1], [0]],
+          [[3], [2], [1], [0]],
+          [[3], [2], [1], [0]],
+          [[3], [2], [1], [0]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[104], [105], [106], [107]],
                                            f["aux_features"]["aux_feature"])
@@ -483,12 +484,12 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 3.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [7, 6, 5, 4, 3, 2, 1, 0],
-          [7, 6, 5, 4, 3, 2, 1, 0],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
+          [[7], [6], [5], [4], [3], [2], [1], [0]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [3, 2, 1, 0],
-          [3, 2, 1, 0],
+          [[3], [2], [1], [0]],
+          [[3], [2], [1], [0]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[108], [109]],
                                            f["aux_features"]["aux_feature"])
@@ -517,16 +518,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 1.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[100], [101], [102], [103]],
                                            f["aux_features"]["aux_feature"])
@@ -534,16 +535,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 2.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[104], [105], [106], [107]],
                                            f["aux_features"]["aux_feature"])
@@ -551,12 +552,12 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 3.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[108], [109]],
                                            f["aux_features"]["aux_feature"])
@@ -585,16 +586,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 1.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[100], [101], [102], [103]],
                                            f["aux_features"]["aux_feature"])
@@ -602,16 +603,16 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 2.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[104], [105], [106], [107]],
                                            f["aux_features"]["aux_feature"])
@@ -619,12 +620,12 @@ class BuildDatasetTest(tf.test.TestCase):
       # Batch 3.
       f = sess.run(features)
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3, 4, 5, 6, 7],
-          [0, 1, 2, 3, 4, 5, 6, 7],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
+          [[0], [1], [2], [3], [4], [5], [6], [7]],
       ], f["time_series_features"]["global_view"])
       np.testing.assert_array_almost_equal([
-          [0, 1, 2, 3],
-          [0, 1, 2, 3],
+          [[0], [1], [2], [3]],
+          [[0], [1], [2], [3]],
       ], f["time_series_features"]["local_view"])
       np.testing.assert_array_almost_equal([[108], [109]],
                                            f["aux_features"]["aux_feature"])

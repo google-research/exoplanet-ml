@@ -63,7 +63,8 @@ class AstroCNNModel(astro_model.AstroModel):
     previous block. The kernel size is fixed throughout.
 
     Args:
-      inputs: A Tensor of shape [batch_size, length].
+      inputs: A Tensor of shape [batch_size, length] or
+        [batch_size, length, ndims].
       hparams: Object containing CNN hyperparameters.
       scope: Name of the variable scope.
 
@@ -73,7 +74,12 @@ class AstroCNNModel(astro_model.AstroModel):
       convolution padding type and pooling.
     """
     with tf.variable_scope(scope):
-      net = tf.expand_dims(inputs, -1)  # [batch, length, channels]
+      net = inputs
+      if net.shape.rank == 2:
+        net = tf.expand_dims(net, -1)  # [batch, length] -> [batch, length, 1]
+      if net.shape.rank != 3:
+        raise ValueError(
+            "Expected inputs to have rank 2 or 3. Got: {}".format(inputs))
       for i in range(hparams.cnn_num_blocks):
         num_filters = int(hparams.cnn_initial_num_filters *
                           hparams.cnn_block_filter_factor**i)
@@ -95,8 +101,8 @@ class AstroCNNModel(astro_model.AstroModel):
                 name="pool")
 
       # Flatten.
-      net.get_shape().assert_has_rank(3)
-      net_shape = net.get_shape().as_list()
+      net.shape.assert_has_rank(3)
+      net_shape = net.shape.as_list()
       output_dim = net_shape[1] * net_shape[2]
       net = tf.reshape(net, [-1, output_dim], name="flatten")
 

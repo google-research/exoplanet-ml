@@ -4,11 +4,6 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])  # Apache 2.0
 
-config_setting(
-    name = "tpu_executor_hardware_mode",
-    values = {"define": "tpu_hardware=true"},
-)
-
 py_binary(
     name = "trainer",
     srcs = ["trainer.py"],
