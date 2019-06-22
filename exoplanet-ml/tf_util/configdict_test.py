@@ -42,7 +42,10 @@ class ConfigDictTest(absltest.TestCase):
             "b": {
                 "float": 4.0,
             }
-        }
+        },
+        "list_nested": [{
+            "c": 5
+        }],
     })
 
   def testAccess(self):
@@ -76,6 +79,10 @@ class ConfigDictTest(absltest.TestCase):
     self.assertEqual(4.0, self._config.double_nested.b["float"])
     self.assertEqual(4.0, self._config.double_nested["b"]["float"])
 
+    # List with nested configdict.
+    self.assertEqual(5, self._config.list_nested[0].c)
+    self.assertEqual(5, self._config.list_nested[0]["c"])
+
     # Nonexistent parameters.
     with self.assertRaises(AttributeError):
       _ = self._config.nonexistent
@@ -83,7 +90,7 @@ class ConfigDictTest(absltest.TestCase):
     with self.assertRaises(KeyError):
       _ = self._config["nonexistent"]
 
-  def testSetAttribut(self):
+  def testSetAttribute(self):
     # Overwrite existing simple type.
     self._config.int = 40
     self.assertEqual(40, self._config.int)
@@ -97,6 +104,10 @@ class ConfigDictTest(absltest.TestCase):
     self.assertIsInstance(self._config.double_nested.a, configdict.ConfigDict)
     self.assertEqual(50.0, self._config.double_nested.a.float)
     self.assertNotIn("int", self._config.double_nested.a)
+
+    # Overwrite attribute in subconfig in list.
+    self._config.list_nested[0].d = 6
+    self.assertEqual(5, self._config.list_nested[0].c)
 
     # Set new simple type.
     self._config.int_2 = 10
@@ -122,6 +133,10 @@ class ConfigDictTest(absltest.TestCase):
 
     self._config.nested["int"] = 50
     self.assertEqual(50, self._config.nested.int)
+
+    # Overwrite attribute in subconfig in list.
+    self._config.list_nested[0]["d"] = 6
+    self.assertEqual(5, self._config.list_nested[0].c)
 
     # Overwrite existing nested config.
     self._config.double_nested["a"] = {"float": 50.0}

@@ -23,9 +23,12 @@ from __future__ import division
 from __future__ import print_function
 
 
-def _maybe_convert_dict(value):
+def _convert_sub_configs(value):
   if isinstance(value, dict):
     return ConfigDict(value)
+
+  if isinstance(value, list):
+    return [_convert_sub_configs(subvalue) for subvalue in value]
 
   return value
 
@@ -42,11 +45,11 @@ class ConfigDict(dict):
     """
     if initial_dictionary:
       for field, value in initial_dictionary.items():
-        initial_dictionary[field] = _maybe_convert_dict(value)
+        initial_dictionary[field] = _convert_sub_configs(value)
     super(ConfigDict, self).__init__(initial_dictionary)
 
   def __setattr__(self, attribute, value):
-    self[attribute] = _maybe_convert_dict(value)
+    self[attribute] = _convert_sub_configs(value)
 
   def __getattr__(self, attribute):
     try:
@@ -61,4 +64,4 @@ class ConfigDict(dict):
       raise AttributeError(e)
 
   def __setitem__(self, key, value):
-    super(ConfigDict, self).__setitem__(key, _maybe_convert_dict(value))
+    super(ConfigDict, self).__setitem__(key, _convert_sub_configs(value))
