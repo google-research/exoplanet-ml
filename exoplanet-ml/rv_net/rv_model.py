@@ -35,6 +35,7 @@ class RvModel(object):
 
         self.ccf_data = self.features["ccf_data"]
         self.label = self.features["label"]
+        self.total_loss = None
 
     def build_network(self):
         """Builds the neural network."""
