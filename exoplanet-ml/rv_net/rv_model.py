@@ -43,11 +43,17 @@ class RvModel(object):
         # Reshape [length] -> [length, 1].
         net = tf.expand_dims(net, -1)
 
+        # create summary object
+        summary = []
+
         for i in self.hparams.conv_block_filters:
             for _ in range(self.hparams.conv_layers_per_block):
+                input_shape = net.shape.as_list()
                 conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=self.hparams.kernel_size, padding='same',
                                                  activation=tf.nn.relu)
                 net = conv_op(net)
+                summary.append("Conv1D-{}-{}. Input shape: {}. Output shape: {}".format(self.hparams.kernel_size, i, input_shape,
+                                                                             net.shape.as_list())
             max_pool = tf.keras.layers.MaxPool1D(pool_size=2, strides=2)
             net = max_pool(net)
 
@@ -66,6 +72,7 @@ class RvModel(object):
         output = tf.keras.layers.Dense(1)
         net = tf.squeeze(output(net))
 
+        self.summary = "\n".join(summary)
         self.predicted_rv = net
 
     def build_losses(self):
