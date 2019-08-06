@@ -87,9 +87,8 @@ def main(_):
 
   # Run evaluation. This will log the result to stderr and also write a summary
   # file in the model_dir.
-  eval_steps = None  # Evaluate over all examples in the file.
-  eval_args = {FLAGS.eval_name: (input_fn, eval_steps)}
-  estimator_runner.evaluate(estimator, eval_args)
+  eval_args = {"name": FLAGS.eval_name, "input_fn": input_fn}
+  estimator_runner.evaluate(estimator, [eval_args])
 
 
 if __name__ == "__main__":
