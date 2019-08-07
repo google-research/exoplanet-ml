@@ -69,8 +69,8 @@ def base():
           # Learning rate parameters.
           "learning_rate": 2e-4,
           "learning_rate_decay_steps": 0,
-          "learning_rate_decay_factor": 0,
-          "learning_rate_decay_staircase": True,
+          "learning_rate_end_factor": 0.0,
+          "learning_rate_decay_power": 1.0,
 
           # Optimizer for training the model.
           "optimizer": "adam",
