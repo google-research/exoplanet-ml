@@ -19,21 +19,6 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-import tensorflow as tf
-
-
-def get_variable_by_name(name, scope=""):
-  """Gets a tf.Variable by name.
-
-  Args:
-    name: Name of the Variable within the specified scope.
-    scope: Variable scope; use the empty string for top-level scope.
-
-  Returns:
-    The matching tf.Variable object.
-  """
-  with tf.variable_scope(scope, reuse=True):
-    return tf.get_variable(name)
 
 
 def fake_features(feature_spec, batch_size):

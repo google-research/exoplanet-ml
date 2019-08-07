@@ -67,7 +67,7 @@ class MetricsTest(tf.test.TestCase):
     value_ops, update_ops = _unpack_metric_map(metric_map)
     initializer = tf.local_variables_initializer()
 
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run(initializer)
 
       sess.run(update_ops)
@@ -134,7 +134,7 @@ class MetricsTest(tf.test.TestCase):
     value_ops, update_ops = _unpack_metric_map(metric_map)
     initializer = tf.local_variables_initializer()
 
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run(initializer)
 
       sess.run(update_ops)
@@ -201,7 +201,7 @@ class MetricsTest(tf.test.TestCase):
     value_ops, update_ops = _unpack_metric_map(metric_map)
     initializer = tf.local_variables_initializer()
 
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run(initializer)
 
       sess.run(update_ops)
@@ -246,7 +246,7 @@ class MetricsTest(tf.test.TestCase):
     value_ops, update_ops = _unpack_metric_map(metric_map)
     initializer = tf.local_variables_initializer()
 
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run(initializer)
 
       sess.run(update_ops)

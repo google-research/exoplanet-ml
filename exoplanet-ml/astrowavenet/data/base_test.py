@@ -124,7 +124,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
     next_features["weights"].shape.assert_is_compatible_with([5, 1, None])
 
     # Dataset repeats indefinitely.
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10], [0], [0], [0], [0]],
@@ -213,7 +213,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
     next_features["weights"].shape.assert_is_compatible_with([5, None, 1])
 
     # Dataset repeats indefinitely.
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10], [0], [0], [0], [0]],
@@ -302,7 +302,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
     next_features["weights"].shape.assert_is_compatible_with([5, 1, None])
 
     # Dataset repeats indefinitely.
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10, 20], [0, 0], [0, 0], [0, 0], [0, 0]],
@@ -395,7 +395,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
     next_features["weights"].shape.assert_is_compatible_with([5, 1, None])
 
     # Dataset repeats indefinitely.
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10], [0], [0], [0], [0]],
@@ -488,7 +488,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
     next_features["weights"].shape.assert_is_compatible_with([5, 1, None])
 
     # Dataset repeats indefinitely.
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10], [0], [0], [0], [0]],
@@ -576,7 +576,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
     self.assertEqual([5, 6, 1], next_features["weights"].shape)
 
     # Dataset repeats indefinitely.
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10], [0], [0], [0], [0], [0]],
@@ -660,7 +660,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
         [5, None, 1])
     next_features["weights"].shape.assert_is_compatible_with([5, 1, None])
 
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10], [0], [0], [0], [0]],
@@ -722,7 +722,7 @@ class TFRecordDatasetTest(tf.test.TestCase):
     self.assertEqual([5, 6, 1], next_features["conditioning_stack"].shape)
     self.assertEqual([5, 6, 1], next_features["weights"].shape)
 
-    with self.test_session() as sess:
+    with self.session() as sess:
       features = sess.run(next_features)
       np.testing.assert_almost_equal([
           [[10], [0], [0], [0], [0], [0]],

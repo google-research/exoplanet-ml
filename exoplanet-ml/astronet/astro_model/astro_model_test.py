@@ -258,9 +258,14 @@ class AstroModelTest(tf.test.TestCase):
                                    tf.estimator.ModeKeys.TRAIN)
     model.build()
 
+    # TODO(shallue): TensorFlow 2.0 doesn't have global variable collections.
+    # If we want to keep testing variable shapes in 2.0, we must keep track of
+    # the individual Keras Layer objects in the model class.
+    variables = {v.op.name: v for v in tf.global_variables()}
+
     # Validate Tensor shapes.
     self.assertShapeEquals((None, 21), model.pre_logits_concat)
-    logits_w = testing.get_variable_by_name("logits/kernel")
+    logits_w = variables["logits/kernel"]
     self.assertShapeEquals((21, 1), logits_w)
 
   def testOneHiddenLayer(self):
@@ -293,12 +298,16 @@ class AstroModelTest(tf.test.TestCase):
                                    tf.estimator.ModeKeys.TRAIN)
     model.build()
 
+    # TODO(shallue): TensorFlow 2.0 doesn't have global variable collections.
+    # If we want to keep testing variable shapes in 2.0, we must keep track of
+    # the individual Keras Layer objects in the model class.
+    variables = {v.op.name: v for v in tf.global_variables()}
+
     # Validate Tensor shapes.
     self.assertShapeEquals((None, 21), model.pre_logits_concat)
-    fc1 = testing.get_variable_by_name(
-        "pre_logits_hidden/fully_connected_1/kernel")
+    fc1 = variables["pre_logits_hidden/fully_connected_1/kernel"]
     self.assertShapeEquals((21, 5), fc1)
-    logits_w = testing.get_variable_by_name("logits/kernel")
+    logits_w = variables["logits/kernel"]
     self.assertShapeEquals((5, 1), logits_w)
 
   def testTwoHiddenLayers(self):
@@ -331,15 +340,18 @@ class AstroModelTest(tf.test.TestCase):
                                    tf.estimator.ModeKeys.TRAIN)
     model.build()
 
+    # TODO(shallue): TensorFlow 2.0 doesn't have global variable collections.
+    # If we want to keep testing variable shapes in 2.0, we must keep track of
+    # the individual Keras Layer objects in the model class.
+    variables = {v.op.name: v for v in tf.global_variables()}
+
     # Validate Tensor shapes.
     self.assertShapeEquals((None, 21), model.pre_logits_concat)
-    fc1 = testing.get_variable_by_name(
-        "pre_logits_hidden/fully_connected_1/kernel")
+    fc1 = variables["pre_logits_hidden/fully_connected_1/kernel"]
     self.assertShapeEquals((21, 5), fc1)
-    fc2 = testing.get_variable_by_name(
-        "pre_logits_hidden/fully_connected_2/kernel")
+    fc2 = variables["pre_logits_hidden/fully_connected_2/kernel"]
     self.assertShapeEquals((5, 5), fc2)
-    logits_w = testing.get_variable_by_name("logits/kernel")
+    logits_w = variables["logits/kernel"]
     self.assertShapeEquals((5, 1), logits_w)
 
   def testBinaryClassification(self):
@@ -379,7 +391,7 @@ class AstroModelTest(tf.test.TestCase):
     # Execute the TensorFlow graph.
     scaffold = tf.train.Scaffold()
     scaffold.finalize()
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run([scaffold.init_op, scaffold.local_init_op])
       step = sess.run(model.global_step)
       self.assertEqual(0, step)
@@ -428,7 +440,7 @@ class AstroModelTest(tf.test.TestCase):
     # Execute the TensorFlow graph.
     scaffold = tf.train.Scaffold()
     scaffold.finalize()
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run([scaffold.init_op, scaffold.local_init_op])
       step = sess.run(model.global_step)
       self.assertEqual(0, step)
@@ -478,7 +490,7 @@ class AstroModelTest(tf.test.TestCase):
     # Execute the TensorFlow graph.
     scaffold = tf.train.Scaffold()
     scaffold.finalize()
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run([scaffold.init_op, scaffold.local_init_op])
       step = sess.run(model.global_step)
       self.assertEqual(0, step)
@@ -528,7 +540,7 @@ class AstroModelTest(tf.test.TestCase):
     # Execute the TensorFlow graph.
     scaffold = tf.train.Scaffold()
     scaffold.finalize()
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run([scaffold.init_op, scaffold.local_init_op])
       step = sess.run(model.global_step)
       self.assertEqual(0, step)

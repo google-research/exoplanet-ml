@@ -265,7 +265,7 @@ def build_dataset(file_pattern,
       # Ensure that the label_id is nonnegative to verify a successful hash
       # map lookup.
       assert_known_label = tf.Assert(
-          tf.greater_equal(label_id, tf.to_int32(0)),
+          tf.greater_equal(label_id, tf.constant(0, tf.int32)),
           ["Unknown label string:", label_value])
       with tf.control_dependencies([assert_known_label]):
         label_id = tf.identity(label_id)

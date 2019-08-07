@@ -208,25 +208,26 @@ class AstroModel(object):
                                     name="pre_logits_concat")
 
     net = pre_logits_concat
-    with tf.variable_scope("pre_logits_hidden"):
+    with tf.name_scope("pre_logits_hidden"):
       for i in range(self.hparams.num_pre_logits_hidden_layers):
-        net = tf.layers.dense(
-            inputs=net,
+        dense_op = tf.keras.layers.Dense(
             units=self.hparams.pre_logits_hidden_layer_size,
             activation=tf.nn.relu,
             name="fully_connected_{}".format(i + 1))
+        net = dense_op(net)
 
         if self.hparams.pre_logits_dropout_rate > 0:
-          net = tf.layers.dropout(
-              net,
-              self.hparams.pre_logits_dropout_rate,
-              training=self.is_training)
+          dropout_op = tf.keras.layers.Dropout(
+              self.hparams.pre_logits_dropout_rate)
+          net = dropout_op(net, training=self.is_training)
 
       # Identify the final pre-logits hidden layer as "pre_logits_hidden/final".
       tf.identity(net, "final")
 
-    logits = tf.layers.dense(
-        inputs=net, units=self.hparams.output_dim, name="logits")
+    # Create the logits.
+    dense_op = tf.keras.layers.Dense(
+        units=self.hparams.output_dim, name="logits")
+    logits = dense_op(net)
 
     self.pre_logits_concat = pre_logits_concat
     self.logits = logits
@@ -263,7 +264,8 @@ class AstroModel(object):
     if self.hparams.output_dim == 1:
       # Binary classification.
       batch_losses = tf.nn.sigmoid_cross_entropy_with_logits(
-          labels=tf.to_float(self.labels), logits=tf.squeeze(self.logits, [1]))
+          labels=tf.cast(self.labels, tf.float32),
+          logits=tf.squeeze(self.logits, [1]))
     else:
       # Multi-class classification.
       batch_losses = tf.nn.sparse_softmax_cross_entropy_with_logits(

@@ -23,11 +23,11 @@ import tensorflow as tf
 
 def _metric_variable(name, shape, dtype):
   """Creates a Variable in LOCAL_VARIABLES and METRIC_VARIABLES collections."""
-  return tf.get_variable(
-      name,
-      initializer=tf.zeros(shape, dtype),
+  return tf.Variable(
+      initial_value=tf.zeros(shape, dtype),
       trainable=False,
-      collections=[tf.GraphKeys.LOCAL_VARIABLES, tf.GraphKeys.METRIC_VARIABLES])
+      collections=[tf.GraphKeys.LOCAL_VARIABLES, tf.GraphKeys.METRIC_VARIABLES],
+      name=name)
 
 
 def _build_metrics(labels, predictions, weights, batch_losses, output_dim=1):
@@ -49,14 +49,14 @@ def _build_metrics(labels, predictions, weights, batch_losses, output_dim=1):
   if binary_classification:
     assert predictions.shape[1] == 1
     predictions = tf.squeeze(predictions, axis=[1])
-    predicted_labels = tf.to_int32(
-        tf.greater(predictions, 0.5), name="predicted_labels")
+    predicted_labels = tf.cast(
+        tf.greater(predictions, 0.5), tf.int32, name="predicted_labels")
   else:
     predicted_labels = tf.argmax(
         predictions, 1, name="predicted_labels", output_type=tf.int32)
 
   metrics = {}
-  with tf.variable_scope("metrics"):
+  with tf.name_scope("metrics"):
     # Total number of examples.
     num_examples = _metric_variable("num_examples", [], tf.float32)
     update_num_examples = tf.assign_add(num_examples, tf.reduce_sum(weights))
@@ -64,8 +64,10 @@ def _build_metrics(labels, predictions, weights, batch_losses, output_dim=1):
 
     # Accuracy metrics.
     num_correct = _metric_variable("num_correct", [], tf.float32)
-    is_correct = weights * tf.to_float(tf.equal(labels, predicted_labels))
-    update_num_correct = tf.assign_add(num_correct, tf.reduce_sum(is_correct))
+    is_correct = tf.equal(labels, predicted_labels)
+    weighted_is_correct = weights * tf.cast(is_correct, tf.float32)
+    update_num_correct = tf.assign_add(num_correct,
+                                       tf.reduce_sum(weighted_is_correct))
     metrics["accuracy/num_correct"] = (num_correct.read_value(),
                                        update_num_correct)
     accuracy = tf.div(num_correct, num_examples, name="accuracy")
@@ -78,11 +80,11 @@ def _build_metrics(labels, predictions, weights, batch_losses, output_dim=1):
     def _count_condition(name, labels_value, predicted_value):
       """Creates a counter for given values of predictions and labels."""
       count = _metric_variable(name, [], tf.float32)
-      is_equal = tf.to_float(
-          tf.logical_and(
-              tf.equal(labels, labels_value),
-              tf.equal(predicted_labels, predicted_value)))
-      update_op = tf.assign_add(count, tf.reduce_sum(weights * is_equal))
+      is_equal = tf.logical_and(
+          tf.equal(labels, labels_value),
+          tf.equal(predicted_labels, predicted_value))
+      weighted_is_equal = weights * tf.cast(is_equal, tf.float32)
+      update_op = tf.assign_add(count, tf.reduce_sum(weighted_is_equal))
       return count.read_value(), update_op
 
     # Confusion matrix metrics.

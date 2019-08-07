@@ -66,14 +66,14 @@ class AstroCNNModel(astro_model.AstroModel):
       inputs: A Tensor of shape [batch_size, length] or
         [batch_size, length, ndims].
       hparams: Object containing CNN hyperparameters.
-      scope: Name of the variable scope.
+      scope: Prefix for operation names.
 
     Returns:
       A Tensor of shape [batch_size, output_size], where the output size depends
       on the input size, kernel size, number of filters, number of layers,
       convolution padding type and pooling.
     """
-    with tf.variable_scope(scope):
+    with tf.name_scope(scope):
       net = inputs
       if net.shape.rank == 2:
         net = tf.expand_dims(net, -1)  # [batch, length] -> [batch, length, 1]
@@ -83,22 +83,22 @@ class AstroCNNModel(astro_model.AstroModel):
       for i in range(hparams.cnn_num_blocks):
         num_filters = int(hparams.cnn_initial_num_filters *
                           hparams.cnn_block_filter_factor**i)
-        with tf.variable_scope("block_{}".format(i + 1)):
+        with tf.name_scope("block_{}".format(i + 1)):
           for j in range(hparams.cnn_block_size):
-            net = tf.layers.conv1d(
-                inputs=net,
+            conv_op = tf.keras.layers.Conv1D(
                 filters=num_filters,
                 kernel_size=int(hparams.cnn_kernel_size),
                 padding=hparams.convolution_padding,
                 activation=tf.nn.relu,
                 name="conv_{}".format(j + 1))
+            net = conv_op(net)
 
           if hparams.pool_size > 1:  # pool_size 0 or 1 denotes no pooling
-            net = tf.layers.max_pooling1d(
-                inputs=net,
+            pool_op = tf.keras.layers.MaxPool1D(
                 pool_size=int(hparams.pool_size),
                 strides=int(hparams.pool_strides),
                 name="pool")
+            net = pool_op(net)
 
       # Flatten.
       net.shape.assert_has_rank(3)

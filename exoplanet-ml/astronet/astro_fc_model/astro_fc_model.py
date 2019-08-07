@@ -69,7 +69,7 @@ class AstroFCModel(astro_model.AstroModel):
     Args:
       inputs: A Tensor of shape [batch_size, length].
       hparams: Object containing hyperparameters.
-      scope: Name of the variable scope.
+      scope: Prefix for operation names.
 
     Returns:
       A Tensor of shape [batch_size, hparams.local_layer_size].
@@ -81,19 +81,18 @@ class AstroFCModel(astro_model.AstroModel):
       return inputs
 
     net = inputs
-    with tf.variable_scope(scope):
+    with tf.name_scope(scope):
       # First layer is optionally implemented as a wide convolution for
       # invariance to small translations.
       if hparams.translation_delta > 0:
         kernel_size = inputs.shape.as_list()[1] - 2 * hparams.translation_delta
-        net = tf.expand_dims(net, -1)  # [batch, length, channels=1]
-        net = tf.layers.conv1d(
-            inputs=net,
+        conv_op = tf.keras.layers.Conv1D(
             filters=hparams.local_layer_size,
             kernel_size=kernel_size,
             padding="valid",
             activation=tf.nn.relu,
             name="conv1d")
+        net = conv_op(tf.expand_dims(net, -1))  # [batch, length, channels=1]
 
         # net is [batch, length, num_filters], where length = 1 +
         # 2 * translation_delta. Pool along the length dimension.
@@ -111,15 +110,15 @@ class AstroFCModel(astro_model.AstroModel):
 
       # Remaining fully connected layers.
       for i in range(remaining_layers):
-        net = tf.contrib.layers.fully_connected(
-            inputs=net,
-            num_outputs=hparams.local_layer_size,
-            activation_fn=tf.nn.relu,
-            scope="fully_connected_{}".format(i + 1))
+        dense_op = tf.keras.layers.Dense(
+            units=hparams.local_layer_size,
+            activation=tf.nn.relu,
+            name="fully_connected_{}".format(i + 1))
+        net = dense_op(net)
 
         if hparams.dropout_rate > 0:
-          net = tf.layers.dropout(
-              net, hparams.dropout_rate, training=self.is_training)
+          dropout_op = tf.keras.layers.Dropout(hparams.dropout_rate)
+          net = dropout_op(net, training=self.is_training)
 
     return net
 

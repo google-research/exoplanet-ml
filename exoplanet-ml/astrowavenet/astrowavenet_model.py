@@ -151,13 +151,13 @@ class AstroWaveNet(object):
       skip_connection: tf.Tensor; Skip connection to network_output layer.
       residual_connection: tf.Tensor; Sum of learned residual and input tensor.
     """
-    with tf.variable_scope("filter"):
+    with tf.name_scope("filter"):
       x_filter_conv = self.causal_conv_layer(x, x.shape[-1].value,
                                              self.hparams.dilation_kernel_width,
                                              dilation_rate)
       cond_filter_conv = self.conv_1x1_layer(self.conditioning_stack,
                                              x.shape[-1].value)
-    with tf.variable_scope("gate"):
+    with tf.name_scope("gate"):
       x_gate_conv = self.causal_conv_layer(x, x.shape[-1].value,
                                            self.hparams.dilation_kernel_width,
                                            dilation_rate)
@@ -168,9 +168,9 @@ class AstroWaveNet(object):
         tf.tanh(x_filter_conv + cond_filter_conv) *
         tf.sigmoid(x_gate_conv + cond_gate_conv))
 
-    with tf.variable_scope("residual"):
+    with tf.name_scope("residual"):
       residual = self.conv_1x1_layer(gated_activation, x.shape[-1].value)
-    with tf.variable_scope("skip"):
+    with tf.name_scope("skip"):
       skip_connection = self.conv_1x1_layer(gated_activation,
                                             self.hparams.skip_output_dim)
 
@@ -195,13 +195,13 @@ class AstroWaveNet(object):
     """
     skip_connections = []
     x = _shift_right(self.autoregressive_input)
-    with tf.variable_scope("preprocess"):
+    with tf.name_scope("preprocess"):
       x = self.causal_conv_layer(x, self.hparams.preprocess_output_size,
                                  self.hparams.preprocess_kernel_width)
     for i in range(self.hparams.num_residual_blocks):
-      with tf.variable_scope("block_{}".format(i)):
+      with tf.name_scope("block_{}".format(i)):
         for dilation_rate in self.hparams.dilation_rates:
-          with tf.variable_scope("dilation_{}".format(dilation_rate)):
+          with tf.name_scope("dilation_{}".format(dilation_rate)):
             skip_connection, x = self.gated_residual_layer(x, dilation_rate)
             skip_connections.append(skip_connection)
 
@@ -220,7 +220,7 @@ class AstroWaveNet(object):
       The parameters of each distribution, a tensor of shape [batch_size,
         time_series_length, outputs_size].
     """
-    with tf.variable_scope("dist_params"):
+    with tf.name_scope("dist_params"):
       conv_outputs = self.conv_1x1_layer(x, outputs_size)
     return conv_outputs
 
@@ -246,7 +246,7 @@ class AstroWaveNet(object):
     Raises:
       ValueError: If distribution type is neither 'categorical' nor 'normal'.
     """
-    with tf.variable_scope("postprocess"):
+    with tf.name_scope("postprocess"):
       network_output = tf.keras.activations.relu(self.network_output)
       network_output = self.conv_1x1_layer(
           network_output,
@@ -347,7 +347,7 @@ class AstroWaveNet(object):
     weights_dim = len(self.weights.shape)
     per_example_weight = tf.reduce_sum(
         self.weights, axis=list(range(1, weights_dim)))
-    per_example_indicator = tf.to_float(tf.greater(per_example_weight, 0))
+    per_example_indicator = tf.cast(per_example_weight > 0, tf.float32)
     num_examples = tf.reduce_sum(per_example_indicator)
 
     batch_losses = -log_prob * self.weights

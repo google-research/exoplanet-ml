@@ -73,12 +73,16 @@ class AstroFCModelTest(tf.test.TestCase):
                                         tf.estimator.ModeKeys.TRAIN)
     model.build()
 
+    # TODO(shallue): TensorFlow 2.0 doesn't have global variable collections.
+    # If we want to keep testing variable shapes in 2.0, we must keep track of
+    # the individual Keras Layer objects in the model class.
+    variables = {v.op.name: v for v in tf.global_variables()}
+
     # Validate Tensor shapes.
-    conv = testing.get_variable_by_name("time_feature_1_hidden/conv1d/kernel")
+    conv = variables["time_feature_1_hidden/conv1d/kernel"]
     self.assertShapeEquals((10, 1, 20), conv)
 
-    fc_1 = testing.get_variable_by_name(
-        "time_feature_1_hidden/fully_connected_1/weights")
+    fc_1 = variables["time_feature_1_hidden/fully_connected_1/kernel"]
     self.assertShapeEquals((20, 20), fc_1)
 
     self.assertItemsEqual(["time_feature_1"],
@@ -92,7 +96,7 @@ class AstroFCModelTest(tf.test.TestCase):
     # Execute the TensorFlow graph.
     scaffold = tf.train.Scaffold()
     scaffold.finalize()
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run([scaffold.init_op, scaffold.local_init_op])
       step = sess.run(model.global_step)
       self.assertEqual(0, step)
@@ -147,16 +151,19 @@ class AstroFCModelTest(tf.test.TestCase):
                                         tf.estimator.ModeKeys.TRAIN)
     model.build()
 
+    # TODO(shallue): TensorFlow 2.0 doesn't have global variable collections.
+    # If we want to keep testing variable shapes in 2.0, we must keep track of
+    # the individual Keras Layer objects in the model class.
+    variables = {v.op.name: v for v in tf.global_variables()}
+
     # Validate Tensor shapes.
-    conv = testing.get_variable_by_name("time_feature_1_hidden/conv1d/kernel")
+    conv = variables["time_feature_1_hidden/conv1d/kernel"]
     self.assertShapeEquals((18, 1, 20), conv)
 
-    fc_1 = testing.get_variable_by_name(
-        "time_feature_2_hidden/fully_connected_1/weights")
+    fc_1 = variables["time_feature_2_hidden/fully_connected_1/kernel"]
     self.assertShapeEquals((5, 7), fc_1)
 
-    fc_2 = testing.get_variable_by_name(
-        "time_feature_2_hidden/fully_connected_2/weights")
+    fc_2 = variables["time_feature_2_hidden/fully_connected_2/kernel"]
     self.assertShapeEquals((7, 7), fc_2)
 
     self.assertItemsEqual(["time_feature_1", "time_feature_2"],
@@ -173,7 +180,7 @@ class AstroFCModelTest(tf.test.TestCase):
     # Execute the TensorFlow graph.
     scaffold = tf.train.Scaffold()
     scaffold.finalize()
-    with self.test_session() as sess:
+    with self.session() as sess:
       sess.run([scaffold.init_op, scaffold.local_init_op])
       step = sess.run(model.global_step)
       self.assertEqual(0, step)
