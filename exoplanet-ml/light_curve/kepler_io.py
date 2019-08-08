@@ -181,7 +181,8 @@ def scramble_light_curve(all_time, all_flux, all_quarters, scramble_type):
 def read_kepler_light_curve(filenames,
                             light_curve_extension="LIGHTCURVE",
                             scramble_type=None,
-                            interpolate_missing_time=False):
+                            interpolate_missing_time=False,
+                            invert=False):
   """Reads time and flux measurements for a Kepler target star.
 
   Args:
@@ -193,6 +194,8 @@ def read_kepler_light_curve(filenames,
       This should only affect the output if scramble_type is specified (NaN time
       values typically come with NaN flux values, which are removed anyway, but
       scrambling decouples NaN time values from NaN flux values).
+    invert: Whether to reflect flux values around the median flux value. This is
+      performed separately for each .fits file.
 
   Returns:
     all_time: A list of numpy arrays; the time values of the light curve.
@@ -229,5 +232,11 @@ def read_kepler_light_curve(filenames,
     flux_and_time_finite = np.logical_and(np.isfinite(flux), np.isfinite(time))
     all_time[i] = time[flux_and_time_finite]
     all_flux[i] = flux[flux_and_time_finite]
+
+  # Possibly reflect each file's flux about its median value.
+  if invert:
+    for flux in all_flux:
+      flux -= 2 * np.median(flux)
+      flux *= -1
 
   return all_time, all_flux
