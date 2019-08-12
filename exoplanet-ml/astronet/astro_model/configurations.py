@@ -72,6 +72,9 @@ def base():
           "learning_rate_end_factor": 0.0,
           "learning_rate_decay_power": 1.0,
 
+          # Weight decay regularization.
+          "weight_decay": 0.0,
+
           # Optimizer for training the model.
           "optimizer": "adam",
 

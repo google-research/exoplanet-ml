@@ -143,8 +143,7 @@ class _ModelFn(object):
     use_tpu = self._use_tpu
     train_op = None
     if mode == tf.estimator.ModeKeys.TRAIN:
-      learning_rate = training.create_learning_rate(hparams, model.global_step)
-      optimizer = training.create_optimizer(hparams, learning_rate, use_tpu)
+      optimizer = training.create_optimizer(hparams, model.global_step, use_tpu)
       train_op = training.create_train_op(model, optimizer)
 
     # Possibly create evaluation metrics.

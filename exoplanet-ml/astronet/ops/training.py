@@ -18,39 +18,57 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import functools
+
 import tensorflow as tf
 
 
-def create_learning_rate(hparams, global_step):
-  """Creates a learning rate Tensor.
+def _polynomial_decay(initial_value, global_step, decay_steps, end_factor,
+                      power):
+  """Convenience wrapper around tf.train.polynomial_decay."""
+  return tf.train.polynomial_decay(
+      learning_rate=initial_value,
+      global_step=global_step,
+      decay_steps=decay_steps,
+      end_learning_rate=end_factor * initial_value,
+      power=power)
+
+
+def create_learning_rate_and_weight_decay(hparams, global_step):
+  """Creates the learning rate and weight decay, both with the same schedule.
 
   Args:
-    hparams: ConfigDict containing the learning rate configuration.
+    hparams: ConfigDict containing the learning rate and weight decay
+      configurations.
     global_step: The global step Tensor.
 
   Returns:
-    A learning rate Tensor.
+    (learning_rate, weight_decay): The learning rate and weight decay, which
+    both follow the learning rate decay schedule (if any).
   """
+  learning_rate = hparams.learning_rate
+  weight_decay = hparams.get("weight_decay", 0.0)
+
   if hparams.get("learning_rate_decay_steps"):
-    learning_rate = tf.train.polynomial_decay(
-        learning_rate=hparams.learning_rate,
+    decay_schedule = functools.partial(
+        _polynomial_decay,
         global_step=global_step,
         decay_steps=hparams.learning_rate_decay_steps,
-        end_learning_rate=(hparams.learning_rate_end_factor *
-                           hparams.learning_rate),
+        end_factor=hparams.learning_rate_end_factor,
         power=hparams.learning_rate_decay_power)
-  else:
-    learning_rate = tf.constant(hparams.learning_rate)
+    learning_rate = decay_schedule(learning_rate)
+    if weight_decay:
+      weight_decay = decay_schedule(weight_decay)
 
-  return learning_rate
+  return learning_rate, weight_decay
 
 
-def create_optimizer(hparams, learning_rate, use_tpu=False):
+def create_optimizer(hparams, global_step, use_tpu=False):
   """Creates a TensorFlow Optimizer.
 
   Args:
     hparams: ConfigDict containing the optimizer configuration.
-    learning_rate: A Python float or a scalar Tensor.
+    global_step: The global step Tensor.
     use_tpu: If True, the returned optimizer is wrapped in a
       CrossShardOptimizer.
 
@@ -61,21 +79,33 @@ def create_optimizer(hparams, learning_rate, use_tpu=False):
     ValueError: If hparams.optimizer is unrecognized.
   """
   optimizer_name = hparams.optimizer.lower()
+  optimizer_params = {}
   if optimizer_name == "momentum":
-    optimizer = tf.train.MomentumOptimizer(
-        learning_rate,
-        momentum=hparams.get("momentum", 0.9),
-        use_nesterov=hparams.get("use_nesterov", False))
+    optimizer_class = tf.train.MomentumOptimizer
+    optimizer_params["momentum"] = hparams.get("momentum", 0.9)
+    optimizer_params["use_nesterov"] = hparams.get("use_nesterov", False)
   elif optimizer_name == "sgd":
-    optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+    optimizer_class = tf.train.GradientDescentOptimizer
   elif optimizer_name == "adagrad":
-    optimizer = tf.train.AdagradOptimizer(learning_rate)
+    optimizer_class = tf.train.AdagradOptimizer
   elif optimizer_name == "adam":
-    optimizer = tf.train.AdamOptimizer(learning_rate)
+    optimizer_class = tf.train.AdamOptimizer
   elif optimizer_name == "rmsprop":
-    optimizer = tf.RMSPropOptimizer(learning_rate)
+    optimizer_class = tf.RMSPropOptimizer
   else:
     raise ValueError("Unknown optimizer: {}".format(hparams.optimizer))
+
+  # Apply weight decay wrapper.
+  optimizer_class = (
+      tf.contrib.opt.extend_with_decoupled_weight_decay(optimizer_class))
+
+  # Create optimizer.
+  learning_rate, weight_decay = create_learning_rate_and_weight_decay(
+      hparams, global_step)
+  optimizer = optimizer_class(
+      weight_decay=weight_decay,
+      learning_rate=learning_rate,
+      **optimizer_params)
 
   if use_tpu:
     optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
