@@ -75,6 +75,9 @@ def base():
           # Weight decay regularization.
           "weight_decay": 0.0,
 
+          # Label smoothing regularization.
+          "label_smoothing": 0.0,
+
           # Optimizer for training the model.
           "optimizer": "adam",
 

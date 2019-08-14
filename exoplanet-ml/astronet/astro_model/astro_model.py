@@ -260,28 +260,40 @@ class AstroModel(object):
       self.batch_losses
       self.total_loss
     """
+    if self.hparams.output_dim == 1:
+      # Binary classification. Labels are 0 or 1, which can also be interpreted
+      # as the probability of the positive class.
+      num_classes = 2
+      target_probabilities = tf.cast(self.labels, tf.float32)
+    else:
+      # Multi-class classification. Labels are {0, 1, ..., num_classes - 1},
+      # which we convert into one-hot probability distributions.
+      num_classes = self.hparams.output_dim
+      target_probabilities = tf.one_hot(self.labels, depth=num_classes)
+
+    label_smoothing = self.hparams.get("label_smoothing", 0)
+    if label_smoothing > 0:
+      # Make target probabilities a weighted mixture of the "hard" probabilities
+      # from the dataset and the uniform distribution.
+      target_probabilities = (
+          target_probabilities * (1 - label_smoothing) +
+          label_smoothing / num_classes)
 
     if self.hparams.output_dim == 1:
       # Binary classification.
       batch_losses = tf.nn.sigmoid_cross_entropy_with_logits(
-          labels=tf.cast(self.labels, tf.float32),
-          logits=tf.squeeze(self.logits, [1]))
+          labels=target_probabilities, logits=tf.squeeze(self.logits, [1]))
     else:
       # Multi-class classification.
-      batch_losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
-          labels=self.labels, logits=self.logits)
+      batch_losses = tf.nn.softmax_cross_entropy_with_logits_v2(
+          labels=target_probabilities, logits=self.logits)
 
-    # Compute the weighted mean cross entropy loss and add it to the LOSSES
-    # collection.
+    # Compute the weighted mean cross entropy loss.
     weights = self.weights if self.weights is not None else 1.0
-    tf.losses.compute_weighted_loss(
+    total_loss = tf.losses.compute_weighted_loss(
         losses=batch_losses,
         weights=weights,
         reduction=tf.losses.Reduction.MEAN)
-
-    # Compute the total loss, including any other losses added to the LOSSES
-    # collection (e.g. regularization losses).
-    total_loss = tf.losses.get_total_loss()
 
     self.batch_losses = batch_losses
     self.total_loss = total_loss
