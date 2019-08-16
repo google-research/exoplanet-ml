@@ -12,24 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CLIF Python extension module for phase_fold.h.
+# CLIF Python extension module for bin_by_phase.h.
 #
 # See https://github.com/google/clif
 
 from light_curve.fast_ops.python.postproc import ValueErrorOnFalse
 
-from "light_curve/fast_ops/phase_fold.h":
-  namespace `astronet`:
-    def `PhaseFoldTime` as phase_fold_time (time: list<float>,
-                                            period: float,
-                                            t0: float) -> list<float>
-
-    def `PhaseFoldAndSortLightCurve` as phase_fold_and_sort_light_curve (
+from "box_least_squares/bin_by_phase.h":
+  namespace `exoplanet_ml::box_least_squares`:
+    def `BinByPhase` as bin_by_phase (
         time: list<float>,
-        flux: list<float>,
+        values: list<float>,
         period: float,
-        t0: float) -> (ok: bool,
-                       folded_time: list<float>,
-                       folded_flux: list<float>,
-                       error: bytes):
+        nbins: int) -> (ok: bool,
+                        binned_values: list<float>,
+                        binned_square_values: list<float>,
+                        bin_counts: list<float>,
+                        error: bytes):
       return ValueErrorOnFalse(...)

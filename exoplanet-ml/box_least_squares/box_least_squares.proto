@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package exoplanet_ml.box_least_squares;
+
+message BlsOptions {
+  // Minimum and maximum widths to consider for the best-fitting box (in units
+  // of vector indices). Both parameters must be in [1, npts - 1].
+  int32 width_min = 1;  // Default: 1
+  int32 width_max = 2;  // Default: npts / 2
+
+  // Minimum and maximum sum of weights to consider for the best fitting box.
+  //   weight_min must be in [0, 1)
+  //   weight_max must be in (0, 1]
+  // Note that the sum of box weights is never allowed to be exactly 0 or 1,
+  // even if weight_min=0 or weight_max=1.
+  float weight_min = 3;  // Default: 0
+  float weight_max = 4;  // Default: 1
+}
+
+// Output of the box least squares algorithm.
+message BlsResult {
+  // start: index of the first point in the best-fitting box.
+  // width: width of the best fitting box.
+  //
+  // If start + width <= npts, the best fitting box is:
+  //   [start, start + width - 1].
+  //
+  // Otherwise, the best fitting box is:
+  //   [start, npts - 1] U [0, start + width - npts - 1]
+  int32 start = 1;
+  int32 width = 2;
+
+  // r: the sum of weights for all indices in the best-fitting box.
+  // s: the weighted sum of values for all indices in the best-fitting box.
+  // t: the weighted sum of square values for all indices in the best-fitting
+  //    box.
+  //
+  // The "box level" value is s / r and the "outer level" value is -s / (1 - r).
+  float r = 3;
+  float s = 4;
+  float t = 6;
+
+  // The sum of weighted squared input values.
+  float total_signal = 7;
+
+  // The box least squares maximization score, equal to s^2 / (r * (1 - r)).
+  float power = 5;
+
+  // The mean squared deviation of the data from the best fitting box.
+  float mse = 8;
+}
+
+// Output of the box least squares algorithm for a single period.
+message BoxTransitModel {
+  // Box Least Squares parameters.
+  int32 nbins = 1;
+  BlsOptions options = 2;
+  BlsResult bls_result = 3;
+
+  // Transit parameters.
+  float period = 4;
+  float duration = 5;
+  float epoch = 6;
+  float depth = 7;
+  float baseline = 8;
+}
+
+message Periodogram {
+  repeated BoxTransitModel results = 1;
+}
+
+message TransitParams {
+  float period = 1;
+  float t0 = 2;
+  float duration = 3;
+  float planet_radius = 4;
+  float impact = 5;
+  float u1 = 6;
+  float u2 = 7;
+}
+
+message TransitStats {
+  float complete_transit_fraction = 1;
+  int32 complete_transits = 2;
+  int32 partial_transits = 3;
+}
+
+message ScoredResult {
+  BoxTransitModel result = 1;
+  string score_method = 2;
+  float score = 3;
+  TransitParams fitted_params = 4;
+  TransitStats transit_stats_raw = 5;
+  TransitStats transit_stats_processed = 6;
+  float cadence = 7;
+}
+
+message TopResults {
+  repeated ScoredResult scored_results = 1;
+}

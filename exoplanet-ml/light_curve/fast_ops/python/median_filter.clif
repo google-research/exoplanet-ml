@@ -18,7 +18,7 @@
 
 from light_curve.fast_ops.python.postproc import ValueErrorOnFalse
 
-from "third_party/tensorflow_models/astronet/light_curve/fast_ops/median_filter.h":
+from "light_curve/fast_ops/median_filter.h":
   namespace `astronet`:
     def `MedianFilter` as median_filter (x: list<float>,
                                          y: list<float>,
