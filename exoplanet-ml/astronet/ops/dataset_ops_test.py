@@ -29,8 +29,6 @@ from tf_util import configdict
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("test_srcdir", "", "Test source directory.")
-
 _TEST_TFRECORD_FILE = "astronet/ops/test_data/test_dataset.tfrecord"
 
 

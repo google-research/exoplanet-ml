@@ -28,8 +28,6 @@ from astrowavenet.data import base
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("test_srcdir", "", "Test source directory.")
-
 _TEST_TFRECORD_FILE = "astrowavenet/data/test_data/test-dataset.tfrecord"
 
 
