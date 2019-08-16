@@ -2,9 +2,6 @@ package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])  # Apache 2.0
 
-load("//devtools/clif/python:clif_build_rule.bzl", "pyclif_proto_library")
-load("//tools/build_defs/proto/cpp:cc_proto_library.bzl", "cc_proto_library")
-
 cc_library(
     name = "bin_by_phase",
     hdrs = ["bin_by_phase.h"],
@@ -38,11 +35,6 @@ py_proto_library(
     name = "box_least_squares_py_pb2",
     api_version = 2,
     deps = [":box_least_squares_proto"],
-)
-
-pyclif_proto_library(
-    name = "box_least_squares_pyclif",
-    proto_lib = ":box_least_squares_proto",
 )
 
 cc_library(
