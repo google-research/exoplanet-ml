@@ -469,7 +469,7 @@ class AstrowavenetTest(tf.test.TestCase):
           [[[0.918939, 48.616352]] * 6, [[1.418939, -1.383647]] * 6],
           batch_losses)
       np.testing.assert_array_almost_equal([24.7676468, 0.017645916],
-                                           per_example_loss)
+                                           per_example_loss, 5)
       np.testing.assert_almost_equal(2, num_examples)
       np.testing.assert_almost_equal(12.392646358, total_loss, decimal=6)
 
