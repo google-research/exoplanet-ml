@@ -30,7 +30,7 @@ namespace exoplanet_ml {
 namespace box_least_squares {
 
 bool RunBls(vector<double> values, vector<double> weights, BlsOptions options,
-            BlsResult* result, string* error) {
+            BlsResult* result, std::string* error) {
   // Validate input lengths.
   if (values.size() != weights.size()) {
     *error = Substitute("values.size() (got: $0) != weights.size() (got: $1)",
@@ -85,7 +85,7 @@ BoxLeastSquares::BoxLeastSquares(vector<double> time, vector<double> values,
 
 bool BoxLeastSquares::Fit(const double period, const int nbins,
                           const BlsOptions& options, BoxTransitModel* result,
-                          string* error) {
+                          std::string* error) {
   // Set BLS options.
   result->set_nbins(nbins);
   *result->mutable_options() = options;

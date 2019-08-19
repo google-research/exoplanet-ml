@@ -29,7 +29,7 @@ class RunBlsTest : public ::testing::Test {
  protected:
   // Output arguments.
   BlsResult result_;
-  string error_;
+  std::string error_;
 };
 
 TEST_F(RunBlsTest, PerfectFit1) {
@@ -128,7 +128,7 @@ TEST(BoxLeastSquaresTest, FitCentered) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -170,7 +170,7 @@ TEST(BoxLeastSquaresTest, FitCentered) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -212,7 +212,7 @@ TEST(BoxLeastSquaresTest, FitCentered) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -277,7 +277,7 @@ TEST(BoxLeastSquaresTest, FitEdgeAligned) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -319,7 +319,7 @@ TEST(BoxLeastSquaresTest, FitEdgeAligned) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -361,7 +361,7 @@ TEST(BoxLeastSquaresTest, FitEdgeAligned) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -427,7 +427,7 @@ TEST(BoxLeastSquaresTest, FitSplit) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -470,7 +470,7 @@ TEST(BoxLeastSquaresTest, FitSplit) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -513,7 +513,7 @@ TEST(BoxLeastSquaresTest, FitSplit) {
 
     // Output arguments.
     BoxTransitModel result;
-    string error;
+    std::string error;
 
     // Run BLS on all periods.
     BoxTransitModel best_result;
@@ -578,7 +578,7 @@ TEST(BoxLeastSquaresTest, FitPositiveMean) {
 
   // Output arguments.
   BoxTransitModel result;
-  string error;
+  std::string error;
 
   // Run BLS on all periods.
   BoxTransitModel best_result;
@@ -641,7 +641,7 @@ TEST(BoxLeastSquaresTest, FitNegativeMean) {
 
   // Output arguments.
   BoxTransitModel result;
-  string error;
+  std::string error;
 
   // Run BLS on all periods.
   BoxTransitModel best_result;

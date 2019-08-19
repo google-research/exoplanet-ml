@@ -71,7 +71,7 @@ namespace internal {
 bool BlsImpl(const std::vector<double>& weighted_values,
              const std::vector<double>& weighted_square_values,
              const std::vector<double>& weights, BlsOptions options,
-             BlsResult* result, string* error);
+             BlsResult* result, std::string* error);
 
 }  // namespace internal
 }  // namespace box_least_squares

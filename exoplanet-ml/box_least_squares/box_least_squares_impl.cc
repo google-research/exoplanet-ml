@@ -27,7 +27,7 @@ namespace internal {
 bool ValidateBlsInput(const vector<double>& weighted_values,
                       const vector<double>& weighted_square_values,
                       const vector<double>& weights, BlsOptions* options,
-                      string* error) {
+                      std::string* error) {
   // Validate time series length.
   if (weighted_values.size() < 2) {
     *error =
@@ -94,7 +94,7 @@ bool ValidateBlsInput(const vector<double>& weighted_values,
 bool BlsImpl(const vector<double>& weighted_values,
              const vector<double>& weighted_square_values,
              const vector<double>& weights, BlsOptions options,
-             BlsResult* result, string* error) {
+             BlsResult* result, std::string* error) {
   // Validate input.
   if (!ValidateBlsInput(weighted_values, weighted_square_values, weights,
                         &options, error)) {

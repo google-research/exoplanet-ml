@@ -32,7 +32,7 @@ class BoxLeastSquaresTest : public ::testing::Test {
  protected:
   // Output arguments.
   BlsResult result_;
-  string error_;
+  std::string error_;
 };
 
 TEST_F(BoxLeastSquaresTest, TooFewPoints) {

@@ -54,7 +54,7 @@ namespace box_least_squares {
 // Returns:
 //   true if the algorithm succeeded. If false, see "error".
 bool RunBls(std::vector<double> values, std::vector<double> weights,
-            BlsOptions options, BlsResult* result, string* error);
+            BlsOptions options, BlsResult* result, std::string* error);
 
 // Class for fitting box transit models using the box least squares algorithm.
 //
@@ -89,7 +89,7 @@ class BoxLeastSquares {
   // Returns:
   //   true if the algorithm succeeded. If false, see `error`.
   bool Fit(const double period, const int nbins, const BlsOptions& options,
-           BoxTransitModel* result, string* error);
+           BoxTransitModel* result, std::string* error);
 
   // Getters.
   const std::vector<double>& get_time() const;

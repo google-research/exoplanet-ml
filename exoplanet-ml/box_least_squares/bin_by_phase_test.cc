@@ -29,7 +29,7 @@ class BinByPhaseTest : public ::testing::Test {
   // Tests that BinByPhase() returns the expected error.
   void ExpectError(const vector<double>& time, const vector<double>& values,
                    const double period, const int nbins,
-                   const string& expected_error) {
+                   const std::string& expected_error) {
     EXPECT_FALSE(BinByPhase(time, values, period, nbins, &binned_values_,
                             &binned_square_values_, &bin_counts_, &error_));
     EXPECT_EQ(error_, expected_error);
@@ -69,7 +69,7 @@ class BinByPhaseTest : public ::testing::Test {
   vector<double> binned_values_;
   vector<double> binned_square_values_;
   vector<int> bin_counts_;
-  string error_;
+  std::string error_;
 };
 
 TEST_F(BinByPhaseTest, EmptyTimeVector) {

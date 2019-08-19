@@ -72,7 +72,7 @@ bool BinByPhase(const std::vector<TimeType>& time,
                 const std::vector<ValueType>& values, const double period,
                 const int nbins, std::vector<ValueType>* binned_values,
                 std::vector<ValueType>* binned_square_values,
-                std::vector<CountType>* bin_counts, string* error) {
+                std::vector<CountType>* bin_counts, std::string* error) {
   if (time.empty()) {
     *error = "time must not be empty";
     return false;
