@@ -282,7 +282,7 @@ the detected event centered.
 Let's explore the generated representations of Kepler-90 g in the output.
 
 ```python
-# Launch iPython (or Python) from the tensorflow_models/astronet/ directory.
+# Launch iPython (or Python) from the exoplanet-ml directory.
 ipython
 
 In[1]:
