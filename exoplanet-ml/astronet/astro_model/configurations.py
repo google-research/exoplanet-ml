@@ -49,6 +49,7 @@ def base():
               "SCR1": 0,  # TCE from scrambled light curve with SCR1 order.
               "INV": 0,  # TCE from inverted light curve.
               "INJ1": 1,  # Injected Planet.
+              "INJ2": 0,  # Simulated eclipsing binary.
           },
       },
       # Hyperparameters for building and training the model.
