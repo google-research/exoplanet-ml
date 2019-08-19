@@ -114,7 +114,7 @@ class _ShardedDatasetBuilder(DatasetBuilder):
       # "weights" Tensor with zeros as well, which ensures that padded elements
       # do not contribute to the loss.
       padded_shapes = {}
-      for name, shape in dataset.output_shapes.iteritems():
+      for name, shape in dataset.output_shapes.items():
         if shape.rank == 2:
           dims = shape.as_list()
           dims[0] = padded_length
