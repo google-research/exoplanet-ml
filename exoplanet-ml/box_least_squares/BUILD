@@ -23,17 +23,10 @@ cc_test(
 proto_library(
     name = "box_least_squares_proto",
     srcs = ["box_least_squares.proto"],
-    cc_api_version = 2,
 )
 
 cc_proto_library(
     name = "box_least_squares_cc_proto",
-    deps = [":box_least_squares_proto"],
-)
-
-py_proto_library(
-    name = "box_least_squares_py_pb2",
-    api_version = 2,
     deps = [":box_least_squares_proto"],
 )
 

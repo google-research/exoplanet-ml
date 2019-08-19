@@ -16,7 +16,7 @@
 #
 # See https://github.com/google/clif
 
-from  "third_party/tensorflow_models/astronet/box_least_squares/box_least_squares_pyclif.h" import *
+from "box_least_squares/box_least_squares_pyclif.h" import *
 
 from light_curve.fast_ops.python.postproc import ValueErrorOnFalse
 
