@@ -21,8 +21,8 @@ limitations under the License.
 //           |  |        |  |        |  |        |  |        |  |
 //            --          --          --          --          --
 
-#ifndef TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_H_
-#define TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_H_
+#ifndef EXOPLANET_ML_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_H_
+#define EXOPLANET_ML_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_H_
 
 #include <string>
 #include <vector>
@@ -114,4 +114,4 @@ class BoxLeastSquares {
 }  // namespace box_least_squares
 }  // namespace exoplanet_ml
 
-#endif  // TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_H_
+#endif  // EXOPLANET_ML_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_H_

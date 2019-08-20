@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BIN_BY_PHASE_H_
-#define TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BIN_BY_PHASE_H_
+#ifndef EXOPLANET_ML_BOX_LEAST_SQUARES_BIN_BY_PHASE_H_
+#define EXOPLANET_ML_BOX_LEAST_SQUARES_BIN_BY_PHASE_H_
 
 #include <algorithm>
 #include <cmath>
@@ -114,4 +114,4 @@ bool BinByPhase(const std::vector<TimeType>& time,
 }  // namespace box_least_squares
 }  // namespace exoplanet_ml
 
-#endif  // TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BIN_BY_PHASE_H_
+#endif  // EXOPLANET_ML_BOX_LEAST_SQUARES_BIN_BY_PHASE_H_

@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_TEST_UTIL_H_
-#define TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_TEST_UTIL_H_
+#ifndef EXOPLANET_ML_BOX_LEAST_SQUARES_TEST_UTIL_H_
+#define EXOPLANET_ML_BOX_LEAST_SQUARES_TEST_UTIL_H_
 
 #include <vector>
 
@@ -35,4 +35,4 @@ void ExpectVectorsAlmostEqual(const std::vector<RawType>& x,
 }  // namespace box_least_squares
 }  // namespace exoplanet_ml
 
-#endif  // TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_TEST_UTIL_H_
+#endif  // EXOPLANET_ML_BOX_LEAST_SQUARES_TEST_UTIL_H_

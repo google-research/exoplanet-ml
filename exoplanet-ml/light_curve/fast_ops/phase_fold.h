@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TENSORFLOW_MODELS_ASTRONET_LIGHT_CURVE_FAST_OPS_PHASE_FOLD_H_
-#define TENSORFLOW_MODELS_ASTRONET_LIGHT_CURVE_FAST_OPS_PHASE_FOLD_H_
+#ifndef EXOPLANET_ML_LIGHT_CURVE_FAST_OPS_PHASE_FOLD_H_
+#define EXOPLANET_ML_LIGHT_CURVE_FAST_OPS_PHASE_FOLD_H_
 
 #include <iostream>
 
@@ -65,4 +65,4 @@ bool PhaseFoldAndSortLightCurve(std::vector<double> time,
 
 }  // namespace astronet
 
-#endif  // TENSORFLOW_MODELS_ASTRONET_LIGHT_CURVE_FAST_OPS_PHASE_FOLD_H_
+#endif  // EXOPLANET_ML_LIGHT_CURVE_FAST_OPS_PHASE_FOLD_H_

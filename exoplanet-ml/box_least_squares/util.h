@@ -12,8 +12,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_UTIL_H_
-#define TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_UTIL_H_
+#ifndef EXOPLANET_ML_BOX_LEAST_SQUARES_UTIL_H_
+#define EXOPLANET_ML_BOX_LEAST_SQUARES_UTIL_H_
 
 #include <numeric>
 #include <vector>
@@ -29,4 +29,4 @@ inline double Sum(const std::vector<double>& values) {
 }  // namespace box_least_squares
 }  // namespace exoplanet_ml
 
-#endif  // TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_UTIL_H_
+#endif  // EXOPLANET_ML_BOX_LEAST_SQUARES_UTIL_H_

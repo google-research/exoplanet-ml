@@ -32,8 +32,8 @@ limitations under the License.
 //             |      |                             |                 |
 //           start   end                          start              end
 
-#ifndef TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_IMPL_H_
-#define TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_IMPL_H_
+#ifndef EXOPLANET_ML_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_IMPL_H_
+#define EXOPLANET_ML_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_IMPL_H_
 
 #include <string>
 #include <vector>
@@ -77,4 +77,4 @@ bool BlsImpl(const std::vector<double>& weighted_values,
 }  // namespace box_least_squares
 }  // namespace exoplanet_ml
 
-#endif  // TENSORFLOW_MODELS_ASTRONET_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_IMPL_H_
+#endif  // EXOPLANET_ML_BOX_LEAST_SQUARES_BOX_LEAST_SQUARES_IMPL_H_
