@@ -13,6 +13,39 @@ py_binary(
     ],
 )
 
+py_binary(
+    name = "beam_predict",
+    srcs = [
+        "beam_predict.py",
+    ],
+    deps = [
+        ":prediction_fns",
+        ":visualize_fns",
+        "//astrowavenet:configurations",
+        "//astrowavenet/util:estimator_util",
+        "//tf_util:configdict",
+    ],
+)
+
+py_binary(
+    name = "beam_visualize",
+    srcs = [
+        "beam_visualize.py",
+    ],
+    deps = [
+        ":prediction_fns",
+        "//astrowavenet:configurations",
+    ],
+)
+
+py_binary(
+    name = "beam_sample_tfrecord",
+    srcs = [
+        "beam_sample_tfrecord.py",
+    ],
+    deps = ["//tf_util:example_util"],
+)
+
 py_library(
     name = "utils",
     srcs = [
@@ -28,6 +61,41 @@ py_library(
     deps = [
         "//light_curve:kepler_io",
         "//light_curve:util",
+        "//tf_util:example_util",
+    ],
+)
+
+py_library(
+    name = "visualize_fns",
+    srcs = [
+        "visualize_fns.py",
+    ],
+)
+
+py_library(
+    name = "prediction_fns",
+    srcs = [
+        "prediction_fns.py",
+    ],
+    deps = [
+        "//astrowavenet:astrowavenet_model",
+        "//astrowavenet/data:kepler_light_curves",
+        "//astrowavenet/util:estimator_util",
+        "//tf_util:config_util",
+        "//tf_util:example_util",
+    ],
+)
+
+py_library(
+    name = "embedding_fns",
+    srcs = [
+        "embedding_fns.py",
+    ],
+    deps = [
+        "//astrowavenet:astrowavenet_model",
+        "//astrowavenet/data:kepler_light_curves",
+        "//tf_util:config_util",
+        "//tf_util:configdict",
         "//tf_util:example_util",
     ],
 )
