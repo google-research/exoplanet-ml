@@ -3,13 +3,13 @@ package(default_visibility = ["//visibility:public"])
 licenses(["notice"])  # Apache 2.0
 
 py_binary(
-    name = "prepare_astrowavenet_inputs",
+    name = "beam_prepare_inputs",
     srcs = [
-        "prepare_astrowavenet_inputs.py",
+        "beam_prepare_inputs.py",
     ],
     deps = [
         ":process_light_curve",
-        ":utils",
+        "//beam:utils",
     ],
 )
 
@@ -35,21 +35,6 @@ py_binary(
     deps = [
         ":prediction_fns",
         "//astrowavenet:configurations",
-    ],
-)
-
-py_binary(
-    name = "beam_sample_tfrecord",
-    srcs = [
-        "beam_sample_tfrecord.py",
-    ],
-    deps = ["//tf_util:example_util"],
-)
-
-py_library(
-    name = "utils",
-    srcs = [
-        "utils.py",
     ],
 )
 
