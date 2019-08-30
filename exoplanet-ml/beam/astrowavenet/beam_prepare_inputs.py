@@ -29,7 +29,7 @@ import apache_beam as beam
 import tensorflow as tf
 
 from astrowavenet.beam import process_light_curve
-from astrowavenet.beam import utils
+from beam import utils
 from tf_util import configdict
 
 # pylint: disable=expression-not-assigned
@@ -138,7 +138,14 @@ def main(argv):
         downward_outlier_clipping=config.downward_outlier_clipping,
         clip_lowest_n_values=config.clip_lowest_n_values,
         normalize_stddev=config.normalize_stddev)
-    partition_fn = utils.TrainValTestPartitionFn("kepler_id", kep_ids)
+    partition_fn = utils.TrainValTestPartitionFn(
+        key_name="kepler_id",
+        partitions={
+            "train": 0.8,
+            "val": 0.1,
+            "test": 0.1,
+        },
+        keys=kep_ids)
 
     # Create pipeline.
     inputs = [{"kepler_id": kep_id} for kep_id in kep_ids]

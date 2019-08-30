@@ -18,7 +18,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from absl import logging
 import apache_beam as beam
 from apache_beam.metrics import Metrics
 import numpy as np
@@ -27,37 +26,70 @@ import numpy as np
 class TrainValTestPartitionFn(beam.PartitionFn):
   """PartitionFn to separate the output into train, val, and test sets."""
 
-  def __init__(self, key_name, keys, random_seed=123):
+  def __init__(self, key_name, partitions, keys=None, random_seed=123):
     """Initializes the PartitionFn.
 
     Args:
       key_name: String name of the key; when partition_for(inputs, ...) is
         called, the value of its key is given by inputs[key_name].
-      keys: List of all possible input keys.
+      partitions: A dictionary with partition names as keys, and where values
+        are either the list of all input keys in that partition (e.g.
+        {"train": [0, 1, 2, 3, 4], "val": [5, 6], "test": [7, 8]}), or floating
+        values that sum to 1.0 representing the fraction of all keys in each
+        partition (e.g. {"train": 0.8, "val": 0.1, "test": 0.1}). In the latter
+        case, the 'keys' argument is compulsory.
+      keys: List of all possible input keys. Only used if partition is a dict of
+        floating values representing the fraction of keys in each partition.
       random_seed: Random seed used for permuting the keys.
     """
-    # Randomly shuffle the keys.
-    np.random.seed(random_seed)
-    keys = np.random.permutation(keys)
+    partition_names = sorted(partitions.keys())  # Sort for reproducibility.
+    partition_values = [partitions[value] for value in partition_names]
 
-    # Partition the keys into train (80%), val (10%), test (10%).
-    num_keys = len(keys)
-    train_cutoff = int(0.80 * num_keys)
-    val_cutoff = int(0.90 * num_keys)
-    train_keys = set(keys[0:train_cutoff])
-    val_keys = set(keys[train_cutoff:val_cutoff])
-    test_keys = set(keys[val_cutoff:])
-    logging.info(
-        "Partitioning %d keys into training (%d), validation (%d) and "
-        "test (%d)", num_keys, len(train_keys), len(val_keys), len(test_keys))
+    partition_to_keys = {}
+    if np.all([np.issubdtype(type(v), np.floating) for v in partition_values]):
+      # Values must sum to 1.0.
+      if not np.isclose(np.sum(partition_values), 1.0):
+        raise ValueError(
+            "Partition values must sum to 1.0. Got {}".format(partitions))
+      # Keys must be provided.
+      if not keys:
+        raise ValueError(
+            "Keys are required when providing partition fractions.")
+      num_keys = len(keys)
+      if len(set(keys)) != num_keys:
+        raise ValueError("Keys are not unique.")
+
+      # Randomly shuffle the keys.
+      np.random.seed(random_seed)
+      keys = np.random.permutation(keys)
+
+      # Create partitions.
+      endpoints = np.cumsum(partition_values) * num_keys
+      endpoints = np.concatenate([[0], endpoints]).astype(np.int)
+      for name, i, j in zip(partition_names, endpoints[:-1], endpoints[1:]):
+        partition_to_keys[name] = set(keys[i:j])
+      print("Partitioned %d keys into paritions of sizes %s" % (num_keys, {
+          name: len(partition_keys)
+          for name, partition_keys in partition_to_keys.items()
+      }))
+    else:
+      # Partitions are sets of keys.
+      if keys:
+        raise ValueError(
+            "Keys were provided but partition values were not floats.")
+
+      num_keys = 0
+      all_keys = set()
+      for partition_name, partition_keys in partitions.items():
+        num_keys += len(partition_keys)
+        all_keys.update(partition_keys)
+        partition_to_keys[partition_name] = set(partition_keys)
+      if len(all_keys) != num_keys:
+        raise ValueError("Keys are not unique.")
 
     self.key_name = key_name
-    self.partition_to_keys = {
-        "train": train_keys,
-        "val": val_keys,
-        "test": test_keys,
-    }
-    self.partition_names = ["train", "val", "test"]
+    self.partition_to_keys = partition_to_keys
+    self.partition_names = partition_names
     self.partition_to_index = {p: i for i, p in enumerate(self.partition_names)}
     self.num_partitions = len(self.partition_names)
 
