@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package exoplanet_ml;
+
+message Points {
+  repeated double time = 1;
+  repeated double flux = 2;
+  repeated double norm_curve = 3;
+}
+
+message RawLightCurve {
+  repeated Points segments = 1;
+}
+
+message SplineMetadata {
+  // Options.
+  double bkspace_min = 1;
+  double bkspace_max = 2;
+  int32 bkspace_num = 3;
+  double penalty_coeff = 4;
+
+  // Spline fitting metatada.
+  double bkspace = 5;
+  repeated double bad_bkspaces = 6;
+  double likelihood_term = 7;
+  double penalty_term = 8;
+  double bic = 9;
+  repeated PeriodicEvent masked_events = 10;
+}
+
+message PeriodicEvent {
+  double period = 1;
+  double t0 = 2;
+  double duration = 3;
+}
+
+message LightCurve {
+  Points light_curve = 1;
+  map<string, string> metadata = 2;
+  Points norm_curve_failures = 3;
+  Points outliers_removed = 4;
+  int32 length_raw = 5;
+  SplineMetadata spline_metadata = 6;
+  repeated PeriodicEvent removed_events = 7;
+}

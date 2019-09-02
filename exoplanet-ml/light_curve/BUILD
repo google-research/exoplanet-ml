@@ -64,3 +64,15 @@ py_test(
         ":util",
     ],
 )
+
+proto_library(
+    name = "light_curve_pb2",
+    srcs = ["light_curve.proto"],
+    cc_api_version = 2,
+)
+
+py_proto_library(
+    name = "light_curve_py_pb2",
+    api_version = 2,
+    deps = [":light_curve_pb2"],
+)
