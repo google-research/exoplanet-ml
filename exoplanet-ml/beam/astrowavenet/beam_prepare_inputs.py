@@ -78,16 +78,6 @@ flags.DEFINE_boolean("normalize_stddev", True,
 FLAGS = flags.FLAGS
 
 
-def _write_to_tfrecord(pcollection, name, output_name, coder, num_shards):
-  """Extracts records and writes them to sharded TFRecord files."""
-  (pcollection
-   | "extract_{}".format(output_name) >> beam.Map(lambda inputs: inputs[name])
-   | "write_{}".format(output_name) >> beam.io.tfrecordio.WriteToTFRecord(
-       os.path.join(FLAGS.output_dir, output_name),
-       coder=coder,
-       num_shards=num_shards))
-
-
 def main(argv):
   del argv  # Unused.
   logging.set_verbosity(logging.INFO)
@@ -168,9 +158,10 @@ def main(argv):
       else:
         raise ValueError("Unrecognized subset name: {}".format(name))
 
-      _write_to_tfrecord(
+      utils.write_to_tfrecord(
           subset,
-          name="example",
+          key="example",
+          output_dir=FLAGS.output_dir,
           output_name=name,
           coder=beam.coders.ProtoCoder(tf.train.Example),
           num_shards=num_shards)

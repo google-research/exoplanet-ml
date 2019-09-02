@@ -18,9 +18,41 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os.path
+
 import apache_beam as beam
 from apache_beam.metrics import Metrics
 import numpy as np
+
+
+def write_to_tfrecord(pcollection, key, output_dir, output_name, coder,
+                      num_shards):
+  """Extracts attributes and writes them to sharded TFRecord files.
+
+  This is a simple wrapper around beam.io.tfrecordio.WriteToTFRecord that first
+  extracts the desired attribute from dicts that comprise the input PCollection.
+
+  Args:
+    pcollection: A Beam PCollection of dicts or dict-like objects. Each element
+      must have an attribute with the specified key.
+    key: Name of the attribute to extract from each dict in the input
+      PCollection.
+    output_dir: The directory to write to.
+    output_name: Output file prefix.
+    coder: Coder used to encode each record.
+    num_shards: The number of files (shards) used for output.
+
+  Returns:
+    A WriteToTFRecord transform object.
+  """
+  extract_stage_name = "extract_{}".format(output_name)
+  write_stage_name = "write_{}".format(output_name)
+  return (pcollection
+          | extract_stage_name >> beam.Map(lambda inputs: inputs[key])
+          | write_stage_name >> beam.io.tfrecordio.WriteToTFRecord(
+              os.path.join(output_dir, output_name),
+              coder=coder,
+              num_shards=num_shards))
 
 
 class TrainValTestPartitionFn(beam.PartitionFn):
