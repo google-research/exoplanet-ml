@@ -8,7 +8,7 @@ py_library(
         "transit_fns.py",
     ],
     deps = [
-        "//experimental/light_curve_util:transit_model",
+        "//experimental/light_curve:transit_model",
         "//light_curve:periodic_event",
         "//light_curve:util",
     ],

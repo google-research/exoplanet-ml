@@ -22,7 +22,7 @@ import apache_beam as beam
 from apache_beam.metrics import Metrics
 import numpy as np
 
-from experimental.light_curve_util import transit_model
+from experimental.light_curve import transit_model
 from light_curve import periodic_event
 from light_curve import util
 
