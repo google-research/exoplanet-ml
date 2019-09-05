@@ -62,7 +62,7 @@ class ModelFn(object):
     model = self.model_class(features, self.hparams, mode)
     model.build()
     print(model.summary)
-
+    print("___________ starting new epoch___________")
     # Possibly create train_op.
     train_op = None
     if mode == tf.estimator.ModeKeys.TRAIN:
