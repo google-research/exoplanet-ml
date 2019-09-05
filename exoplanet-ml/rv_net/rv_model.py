@@ -55,8 +55,11 @@ class RvModel(object):
                 net = conv_op(net)
                 summary.append("Conv1D-{}-{}. Input shape: {}. Output shape: {}".format(self.hparams.kernel_size, i, input_shape,
                                                                              net.shape.as_list()))
-            max_pool = tf.keras.layers.MaxPool1D(pool_size=2, strides=2)
+            pool_size = 2
+            strides = 2
+            max_pool = tf.keras.layers.MaxPool1D(pool_size=pool_size, strides=strides)
             net = max_pool(net)
+            summary.append("MaxPool1D-{}. Pool Size: {}. Strides: {}".format(self.hparams.kernel_size, poolsize, strides))
 
         for i in self.hparams.final_conv_num_filters:
             conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=self.hparams.kernel_size, padding='same',
