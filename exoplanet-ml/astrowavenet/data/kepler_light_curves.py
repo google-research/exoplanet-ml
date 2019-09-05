@@ -36,13 +36,14 @@ def parse_example(serialized):
   # Extract values from SparseTensor objects.
   time = features["time"].values
   autoregressive_input = features["flux"].values
-  conditioning_stack = tf.cast(features["mask"].values, dtype=tf.float32)
+  mask = tf.cast(features["mask"].values, dtype=tf.float32)
   example_id = tf.cast(features["kepler_id"], dtype=tf.int32)
   return {
       "time": time,
       "autoregressive_input": autoregressive_input,
-      "conditioning_stack": conditioning_stack,
+      "conditioning_stack": mask,
       "example_id": example_id,
+      "weights": mask,
   }
 
 
