@@ -59,7 +59,7 @@ class RvModel(object):
             strides = 2
             max_pool = tf.keras.layers.MaxPool1D(pool_size=pool_size, strides=strides)
             net = max_pool(net)
-            summary.append("MaxPool1D-{}. Pool Size: {}. Strides: {}".format(self.hparams.kernel_size, poolsize, strides))
+            summary.append("MaxPool1D-{}. Pool Size: {}. Strides: {}".format(self.hparams.kernel_size, pool_size, strides))
 
         for i in self.hparams.final_conv_num_filters:
             conv_op = tf.keras.layers.Conv1D(filters=i, kernel_size=self.hparams.kernel_size, padding='same',
