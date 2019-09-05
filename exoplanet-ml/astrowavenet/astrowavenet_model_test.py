@@ -60,6 +60,8 @@ class AstrowavenetTest(tf.test.TestCase):
     }
     mode = tf.estimator.ModeKeys.TRAIN
     hparams = configdict.ConfigDict({
+        "use_future_context": False,
+        "predict_n_steps_ahead": 1,
         "dilation_kernel_width": 2,
         "skip_output_dim": 6,
         "preprocess_output_size": 3,
@@ -227,6 +229,8 @@ class AstrowavenetTest(tf.test.TestCase):
     }
     mode = tf.estimator.ModeKeys.TRAIN
     hparams = configdict.ConfigDict({
+        "use_future_context": False,
+        "predict_n_steps_ahead": 1,
         "dilation_kernel_width": 2,
         "skip_output_dim": 6,
         "preprocess_output_size": 3,
@@ -299,6 +303,8 @@ class AstrowavenetTest(tf.test.TestCase):
     }
     mode = tf.estimator.ModeKeys.TRAIN
     hparams = configdict.ConfigDict({
+        "use_future_context": False,
+        "predict_n_steps_ahead": 1,
         "dilation_kernel_width": 2,
         "skip_output_dim": 6,
         "preprocess_output_size": 3,
@@ -381,6 +387,8 @@ class AstrowavenetTest(tf.test.TestCase):
     }
     mode = tf.estimator.ModeKeys.TRAIN
     hparams = configdict.ConfigDict({
+        "use_future_context": False,
+        "predict_n_steps_ahead": 1,
         "dilation_kernel_width": 2,
         "skip_output_dim": 6,
         "preprocess_output_size": 3,
@@ -514,6 +522,8 @@ class AstrowavenetTest(tf.test.TestCase):
     }
     mode = tf.estimator.ModeKeys.TRAIN
     hparams = configdict.ConfigDict({
+        "use_future_context": False,
+        "predict_n_steps_ahead": 1,
         "dilation_kernel_width": 2,
         "skip_output_dim": 6,
         "preprocess_output_size": 3,
@@ -621,6 +631,8 @@ class AstrowavenetTest(tf.test.TestCase):
     }
     mode = tf.estimator.ModeKeys.TRAIN
     hparams = configdict.ConfigDict({
+        "use_future_context": False,
+        "predict_n_steps_ahead": 1,
         "dilation_kernel_width": 2,
         "skip_output_dim": 6,
         "preprocess_output_size": 3,
@@ -685,7 +697,7 @@ class AstrowavenetTest(tf.test.TestCase):
       np.testing.assert_almost_equal(2, num_examples)
       np.testing.assert_almost_equal(4.07788801, total_loss)
 
-  def test_causality(self):
+  def test_causality_without_future_context(self):
     time_series_length = 7
     input_num_features = 1
     context_num_features = 1
@@ -704,6 +716,87 @@ class AstrowavenetTest(tf.test.TestCase):
     }
     mode = tf.estimator.ModeKeys.TRAIN
     hparams = configdict.ConfigDict({
+        "use_future_context": False,
+        "predict_n_steps_ahead": 1,
+        "dilation_kernel_width": 1,
+        "skip_output_dim": 1,
+        "preprocess_output_size": 1,
+        "preprocess_kernel_width": 1,
+        "num_residual_blocks": 1,
+        "dilation_rates": [1],
+        "output_distribution": {
+            "type": "normal",
+            "min_scale": 0.001,
+            "predict_outlier_distribution": False
+        }
+    })
+
+    model = astrowavenet_model.AstroWaveNet(features, hparams, mode)
+    model.build()
+
+    scaffold = tf.train.Scaffold()
+    scaffold.finalize()
+    with self.cached_session() as sess:
+      sess.run([scaffold.init_op, scaffold.local_init_op])
+      step = sess.run(model.global_step)
+      self.assertEqual(0, step)
+
+      feed_dict = {
+          input_placeholder: [
+              [[0], [0], [0], [0], [0], [0], [0]],
+              [[1], [0], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [1], [0], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [1]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+          ],
+          context_placeholder: [
+              [[0], [0], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+              [[1], [0], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [1], [0], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [1]],
+          ],
+      }
+      network_output = sess.run(model.network_output, feed_dict=feed_dict)
+      np.testing.assert_array_equal(
+          [
+              [[0], [0], [0], [0], [0], [0], [0]],
+              # Input elements are used to predict the next timestamp.
+              [[0], [1], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [0], [1], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+              # Context elements are used to predict the next timestamp.
+              [[0], [1], [0], [0], [0], [0], [0]],
+              [[0], [0], [0], [0], [1], [0], [0]],
+              [[0], [0], [0], [0], [0], [0], [0]],
+          ],
+          np.greater(np.abs(network_output), 0))
+
+  def test_causality_with_future_context(self):
+    time_series_length = 7
+    input_num_features = 1
+    context_num_features = 1
+
+    input_placeholder = tf.placeholder(
+        dtype=tf.float32,
+        shape=[None, time_series_length, input_num_features],
+        name="input")
+    context_placeholder = tf.placeholder(
+        dtype=tf.float32,
+        shape=[None, time_series_length, context_num_features],
+        name="context")
+    features = {
+        "autoregressive_input": input_placeholder,
+        "conditioning_stack": context_placeholder
+    }
+    mode = tf.estimator.ModeKeys.TRAIN
+    hparams = configdict.ConfigDict({
+        "use_future_context": True,
+        "predict_n_steps_ahead": 1,
         "dilation_kernel_width": 1,
         "skip_output_dim": 1,
         "preprocess_output_size": 1,

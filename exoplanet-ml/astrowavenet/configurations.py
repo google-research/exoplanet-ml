@@ -25,6 +25,8 @@ def base():
       # Hyperparameters for building and training the model.
       "hparams": {
           "batch_size": 64,
+          "use_future_context": False,
+          "predict_n_steps_ahead": 1,
           "dilation_kernel_width": 2,
           "skip_output_dim": 10,
           "preprocess_output_size": 3,

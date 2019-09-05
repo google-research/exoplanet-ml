@@ -26,19 +26,20 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 
 
-def _shift_right(x):
-  """Shifts the input Tensor right by one index along the second dimension.
+def _shift_right(x, n):
+  """Shifts the input Tensor right by n indices along the second dimension.
 
-  Pads the front with zeros and discards the last element.
+  Pads the front of the sequence with zeros and discards the last n elements.
 
   Args:
     x: Input three-dimensional tf.Tensor.
+    n: Integer; number of indices to shift.
 
   Returns:
     Padded, shifted tensor of same shape as input.
   """
-  x_padded = tf.pad(x, [[0, 0], [1, 0], [0, 0]])
-  return x_padded[:, :-1, :]
+  x_padded = tf.pad(x, [[0, 0], [n, 0], [0, 0]])
+  return x_padded[:, :-n, :]
 
 
 class AstroWaveNet(object):
@@ -140,11 +141,12 @@ class AstroWaveNet(object):
         output_size, 1, activation=activation, name="conv1x1")
     return conv_1x1_op(x)
 
-  def gated_residual_layer(self, x, dilation_rate):
+  def gated_residual_layer(self, x, conditioning_stack, dilation_rate):
     """Creates a gated, dilated convolutional layer with a residual connection.
 
     Args:
-      x: tf.Tensor; Input tensor
+      x: tf.Tensor; Input tensor.
+      conditioning_stack: tf.Tensor; The conditioning stack corresponding to x.
       dilation_rate: int; Dilation rate of the layer.
 
     Returns:
@@ -155,13 +157,13 @@ class AstroWaveNet(object):
       x_filter_conv = self.causal_conv_layer(x, x.shape[-1].value,
                                              self.hparams.dilation_kernel_width,
                                              dilation_rate)
-      cond_filter_conv = self.conv_1x1_layer(self.conditioning_stack,
+      cond_filter_conv = self.conv_1x1_layer(conditioning_stack,
                                              x.shape[-1].value)
     with tf.name_scope("gate"):
       x_gate_conv = self.causal_conv_layer(x, x.shape[-1].value,
                                            self.hparams.dilation_kernel_width,
                                            dilation_rate)
-      cond_gate_conv = self.conv_1x1_layer(self.conditioning_stack,
+      cond_gate_conv = self.conv_1x1_layer(conditioning_stack,
                                            x.shape[-1].value)
 
     gated_activation = (
@@ -193,8 +195,24 @@ class AstroWaveNet(object):
     Outputs:
       self.network_output; tf.Tensor
     """
+    x = self.autoregressive_input
+    conditioning_stack = self.conditioning_stack
+
+    # Shift the input sequence N points to the right (i.e. pad the beginning
+    # of the sequence with zeros and drop the last N points) so that the i-th
+    # element of the resulting sequence (used as input to the network) aligns
+    # with the (i+N)-th element of the original sequence (used as the training
+    # target). If self.hparams.use_future_context is True, the conditioning
+    # stack is not shifted, so the conditioning stack up to index i+N is used to
+    # predict the (i+N)-th element of the input sequence. Otherwise, the
+    # conditioning stack is also shifted, so the conditioning stack up to index
+    # i is used to predict the (i+N)-th element of the original sequence.
+    shift_num_steps = self.hparams.predict_n_steps_ahead
+    x = _shift_right(x, shift_num_steps)
+    if not self.hparams.use_future_context:
+      conditioning_stack = _shift_right(conditioning_stack, shift_num_steps)
+
     skip_connections = []
-    x = _shift_right(self.autoregressive_input)
     with tf.name_scope("preprocess"):
       x = self.causal_conv_layer(x, self.hparams.preprocess_output_size,
                                  self.hparams.preprocess_kernel_width)
@@ -202,7 +220,8 @@ class AstroWaveNet(object):
       with tf.name_scope("block_{}".format(i)):
         for dilation_rate in self.hparams.dilation_rates:
           with tf.name_scope("dilation_{}".format(dilation_rate)):
-            skip_connection, x = self.gated_residual_layer(x, dilation_rate)
+            skip_connection, x = self.gated_residual_layer(
+                x, conditioning_stack, dilation_rate)
             skip_connections.append(skip_connection)
 
     self.network_output = tf.add_n(skip_connections)
