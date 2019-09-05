@@ -61,6 +61,7 @@ class ModelFn(object):
     """Builds the model and returns an EstimatorSpec."""
     model = self.model_class(features, self.hparams, mode)
     model.build()
+    print(model.summary)
 
     # Possibly create train_op.
     train_op = None
