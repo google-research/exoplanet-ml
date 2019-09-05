@@ -86,7 +86,9 @@ class ModelFn(object):
 
     return tf.estimator.EstimatorSpec(
         mode=mode,
-        predictions=model.predicted_rv,
+        predictions={"ccf_data": model.ccf_data,
+  		     "label": model.label,
+                     "predicted_rv": model.predicted_rv},
         loss=model.total_loss,
         train_op=train_op,
 	eval_metric_ops=eval_metrics)
