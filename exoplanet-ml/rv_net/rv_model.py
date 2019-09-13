@@ -90,3 +90,52 @@ class RvModel(object):
         self.build_network()
         if self.mode != tf.estimator.ModeKeys.PREDICT:
             self.build_losses()
+
+class RvLinearModel(object):
+    """A TensorFlow model for predicting radial velocities."""
+
+    def __init__(self, features, hparams, mode):
+        """Basic setup.
+
+        The actual TensorFlow model is constructed in build().
+
+        Args:
+          features: Dictionary containing "ccf_data" and "label".
+          hparams: A ConfigDict of hyperparameters for building the model.
+          mode: A tf.estimator.ModeKeys to specify whether the graph should be built
+            for training, evaluation or prediction.
+
+        Raises:
+          ValueError: If mode is invalid.
+        """
+        valid_modes = [
+            tf.estimator.ModeKeys.TRAIN, tf.estimator.ModeKeys.EVAL,
+            tf.estimator.ModeKeys.PREDICT
+        ]
+        if mode not in valid_modes:
+            raise ValueError("Expected mode in {}. Got: {}".format(valid_modes, mode))
+
+        self.features = features
+        self.hparams = hparams
+        self.mode = mode
+
+        self.ccf_data = self.features["ccf_data"]
+        self.label = self.features["label"]
+        self.total_loss = None
+
+    def build_network(self):
+        """Builds linear model."""
+        dense_layer = tf.keras.layers.Dense(1)
+        self.predicted_rv = dense_layer(self.ccf_data)
+
+    def build_losses(self):
+        """Builds the training losses."""
+        self.batch_losses = tf.squared_difference(self.predicted_rv, self.label)
+        self.total_loss = tf.reduce_mean(self.batch_losses)
+
+    def build(self):
+        """Creates all ops for training, evaluation or inference."""
+        self.global_step = tf.train.get_or_create_global_step()
+        self.build_network()
+        if self.mode != tf.estimator.ModeKeys.PREDICT:
+            self.build_losses()
