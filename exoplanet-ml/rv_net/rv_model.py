@@ -132,6 +132,7 @@ class RvLinearModel(object):
         dense_layer = tf.keras.layers.Dense(1)
         summary.append("Dense-{}-{}. Input shape: {}. Output shape: {}".format(self.hparams.kernel_size, 1, 401,1))
 
+        self.summary = "\n".join(summary)
         self.predicted_rv = dense_layer(self.ccf_data)
 
     def build_losses(self):
