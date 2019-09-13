@@ -125,7 +125,13 @@ class RvLinearModel(object):
 
     def build_network(self):
         """Builds linear model."""
+        # create summary object
+
+        summary = []
+
         dense_layer = tf.keras.layers.Dense(1)
+        summary.append("Dense-{}-{}. Input shape: {}. Output shape: {}".format(self.hparams.kernel_size, i, input_shape,1)
+
         self.predicted_rv = dense_layer(self.ccf_data)
 
     def build_losses(self):
