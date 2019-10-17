@@ -23,11 +23,11 @@ import os.path
 import apache_beam as beam
 from apache_beam.metrics import Metrics
 import numpy as np
+import scipy.interpolate
 import tensorflow as tf
 
 from astrowavenet import astrowavenet_model
 from astrowavenet.data import kepler_light_curves
-from light_curve import util
 from tf_util import config_util
 from tf_util import configdict
 from tf_util import example_util
@@ -137,6 +137,8 @@ class ExtractEmbeddingsDoFn(beam.DoFn):
     if self.align_to_predictions:
       shift_num_steps = self.config.hparams.predict_n_steps_ahead
       time = time[shift_num_steps:]
+      cadence_no = cadence_no[shift_num_steps:]
+      mask = mask[shift_num_steps:]
       embedding = embedding[:-shift_num_steps]
     assert len(time) == len(embedding), (
         "len(time)={}, len(embedding)={}".format(len(time), len(embedding)))
@@ -145,7 +147,14 @@ class ExtractEmbeddingsDoFn(beam.DoFn):
     # 0 in the mask array.
     if self.interpolate_missing_time:
       # Interpolate missing time values.
-      time = util.interpolate_missing_time(time[mask], cadence_no)
+      interpolate_fn = scipy.interpolate.interp1d(
+          cadence_no[mask],
+          time[mask],
+          copy=False,
+          bounds_error=False,
+          fill_value="extrapolate",
+          assume_sorted=True)
+      time = interpolate_fn(cadence_no)
     else:
       # Remove embeddings corresponding to missing time values.
       time = time[mask]
