@@ -30,7 +30,8 @@ def write_to_tfrecord(pcollection,
                       output_name,
                       value_name,
                       value_coder=beam.coders.BytesCoder(),
-                      num_shards=0):
+                      num_shards=0,
+                      stage_name_suffix=""):
   """Extracts items and writes them to sharded TFRecord files.
 
   This is a simple wrapper around beam.io.tfrecordio.WriteToTFRecord that first
@@ -45,12 +46,16 @@ def write_to_tfrecord(pcollection,
       PCollection.
     value_coder: Coder used to encode each value.
     num_shards: The number of files (shards) used for output.
+    stage_name_suffix: Optional suffix for the stage names.
 
   Returns:
     A WriteToTFRecord transform object.
   """
-  extract_stage_name = "extract_{}".format(output_name)
-  write_stage_name = "write_{}".format(output_name)
+  if stage_name_suffix:
+    stage_name_suffix = "-" + stage_name_suffix
+  extract_stage_name = "extract_{}{}".format(output_name, stage_name_suffix)
+  write_stage_name = "write_{}{}".format(output_name, stage_name_suffix)
+
   return (pcollection
           | extract_stage_name >> beam.Map(lambda inputs: inputs[value_name])
           | write_stage_name >> beam.io.tfrecordio.WriteToTFRecord(

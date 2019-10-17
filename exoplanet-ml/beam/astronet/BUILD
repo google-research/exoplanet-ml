@@ -21,6 +21,7 @@ py_binary(
     srcs = [
         "beam_prepare_embedding_inputs.py",
     ],
+    data = glob(["*.json"]),
     deps = [
         "//astronet/data:preprocess",
         "//beam:utils",

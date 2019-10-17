@@ -27,6 +27,7 @@ import tensorflow as tf
 
 from astrowavenet import astrowavenet_model
 from astrowavenet.data import kepler_light_curves
+from light_curve import util
 from tf_util import config_util
 from tf_util import configdict
 from tf_util import example_util
@@ -38,8 +39,23 @@ class ExtractEmbeddingsDoFn(beam.DoFn):
   def __init__(self,
                model_dir,
                checkpoint_filename=None,
-               apply_relu_to_embeddings=False):
-    """Initializes the DoFn."""
+               apply_relu_to_embeddings=False,
+               align_to_predictions=False,
+               interpolate_missing_time=False):
+    """Initializes the DoFn.
+
+    Args:
+      model_dir: Directory containing AstroWaveNet checkpoints.
+      checkpoint_filename: Optional name of the AstroWaveNet filename to use. If
+        not specified, the most recent checkpoint it used.
+      apply_relu_to_embeddings: Whether to pass the embeddings through a ReLu
+        function.
+      align_to_predictions: Whether to align embeddings with the time value that
+        the embedding vector was used to predict (as opposed to the most recent
+        time value included in the receptive field).
+      interpolate_missing_time: Whether to interpolate missing time values and
+        return their embeddings. Otherwise, missing time values are removed.
+    """
     config = config_util.parse_json(os.path.join(model_dir, "config.json"))
     config = configdict.ConfigDict(config)
 
@@ -53,6 +69,8 @@ class ExtractEmbeddingsDoFn(beam.DoFn):
     self.config = config
     self.checkpoint_file = checkpoint_file
     self.apply_relu_to_embeddings = apply_relu_to_embeddings
+    self.align_to_predictions = align_to_predictions
+    self.interpolate_missing_time = interpolate_missing_time
 
   def start_bundle(self):
     # Build the model.
@@ -91,33 +109,53 @@ class ExtractEmbeddingsDoFn(beam.DoFn):
   def process(self, inputs):
     kepler_id = inputs["kepler_id"]
     example = inputs["wavenet_example"]
+
+    # Get time, cadence number, and mask vectors from the example.
+    time = example_util.get_float_feature(example, "time")
+    cadence_no = example_util.get_int64_feature(example, "cadence_no")
+    mask = example_util.get_int64_feature(example, "mask").astype(np.bool)
+    assert len(time) == len(cadence_no), (
+        "len(time)={}, len(cadence_no)={}".format(len(time), len(cadence_no)))
+    assert len(time) == len(mask), "len(time)={}, len(mask)={}".format(
+        len(time), len(mask))
+
+    # Generate embeddings from AstroWavenet model.
     model_output = self.session.run(
         {
             "example_id": self.parsed_example_id,
-            "time": self.parsed_time,
             "embedding": self.model.network_output
         },
         feed_dict={self.example_placeholder: example.SerializeToString()})
 
-    # Validate Kepler ID.
+    # Sanity check Kepler ID.
     if kepler_id != model_output["example_id"]:
       raise ValueError("Expected Kepler ID {}, got {}".format(
           kepler_id, model_output["example_id"]))
 
-    # Remove embeddings corresponding to missing datapoints - these don't have
-    # valid time values.
-    time = np.squeeze(model_output["time"])
+    # Extract and postprocess embedding.
     embedding = np.squeeze(model_output["embedding"])
-    mask = example_util.get_int64_feature(example, "mask").astype(np.bool)
-    assert len(time) == len(mask), "len(time)={}, len(mask)={}".format(
-        len(time), len(mask))
-    assert len(embedding) == len(mask), (
-        "len(embedding)={}, len(mask)={}".format(len(time), len(mask)))
-    time = time[mask]
-    embedding = embedding[mask]
-    assert len(time) == np.sum(mask), "len(time)={}, sum(mask)={}".format(
-        len(time), np.sum(mask))
-    assert np.sum(time <= 0) == 0, "time not positive after applying mask"
+    if self.align_to_predictions:
+      shift_num_steps = self.config.hparams.predict_n_steps_ahead
+      time = time[shift_num_steps:]
+      embedding = embedding[:-shift_num_steps]
+    assert len(time) == len(embedding), (
+        "len(time)={}, len(embedding)={}".format(len(time), len(embedding)))
+
+    # Deal with missing time values. These have value 0.0 in the time array and
+    # 0 in the mask array.
+    if self.interpolate_missing_time:
+      # Interpolate missing time values.
+      time = util.interpolate_missing_time(time[mask], cadence_no)
+    else:
+      # Remove embeddings corresponding to missing time values.
+      time = time[mask]
+      embedding = embedding[mask]
+      assert len(time) == np.sum(mask), "len(time)={}, sum(mask)={}".format(
+          len(time), np.sum(mask))
+
+    assert len(time) == len(embedding), (
+        "len(time)={}, len(embedding)={}".format(len(time), len(embedding)))
+    assert np.sum(time <= 0) == 0, "time not positive after postprocesing"
 
     # Possibly apply the ReLu function.
     if self.apply_relu_to_embeddings:

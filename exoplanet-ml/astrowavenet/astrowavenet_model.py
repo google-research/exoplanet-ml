@@ -206,11 +206,13 @@ class AstroWaveNet(object):
     # stack is not shifted, so the conditioning stack up to index i+N is used to
     # predict the (i+N)-th element of the input sequence. Otherwise, the
     # conditioning stack is also shifted, so the conditioning stack up to index
-    # i is used to predict the (i+N)-th element of the original sequence.
-    shift_num_steps = self.hparams.predict_n_steps_ahead
-    x = _shift_right(x, shift_num_steps)
-    if not self.hparams.use_future_context:
-      conditioning_stack = _shift_right(conditioning_stack, shift_num_steps)
+    # i is used to predict the (i+N)-th element of the original sequence. No
+    # shifting is applied in PREDICT mode, which is used to generate embeddings.
+    if self.mode != tf.estimator.ModeKeys.PREDICT:
+      shift_num_steps = self.hparams.predict_n_steps_ahead
+      x = _shift_right(x, shift_num_steps)
+      if not self.hparams.use_future_context:
+        conditioning_stack = _shift_right(conditioning_stack, shift_num_steps)
 
     skip_connections = []
     with tf.name_scope("preprocess"):

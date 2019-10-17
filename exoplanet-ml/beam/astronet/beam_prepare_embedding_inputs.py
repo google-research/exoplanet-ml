@@ -42,14 +42,8 @@ from tf_util import example_util
 # pylint: disable=expression-not-assigned
 
 flags.DEFINE_string(
-    "input_event_csv_file", None,
-    "CSV file containing table of Kepler events to preprocess.")
-
-flags.DEFINE_string("tce_id_dir", None,
-                    "Directory containing files {train,val,test}_tce_ids.txt.")
-
-flags.DEFINE_string("astrowavenet_file_pattern", None,
-                    "File pattern of input TFRecords.")
+    "config_json", None, "List of JSON files containing the configurations for "
+    "each type of TCE (e.g. real, injected, inverted).")
 
 flags.DEFINE_string("model_dir", None,
                     "Directory containing an AstroWaveNet model checkpoint.")
@@ -58,29 +52,18 @@ flags.DEFINE_string(
     "checkpoint_filename", None,
     "Optional filename for a specific model checkpoint to use.")
 
-flags.DEFINE_string("kepler_data_dir", None,
-                    "Base folder containing Kepler data.")
-
-flags.DEFINE_string("injected_group", None,
-                    "Optional. One of 'inj1', 'inj2', 'inj3'.")
-
 flags.DEFINE_string("output_dir", None,
                     "Directory in which to save the output.")
 
 flags.DEFINE_integer("num_shards_train", 128,
-                     "Number of shards for the training set.")
+                     "Number of shards for the training sets.")
 
-flags.DEFINE_integer("num_shards_val", 1,
-                     "Number of shards for the validation set.")
+flags.DEFINE_integer("num_shards_val", 8,
+                     "Number of shards for the validation sets.")
 
-flags.DEFINE_integer("num_shards_test", 1, "Number of shards for the test set.")
+flags.DEFINE_integer("num_shards_test", 8,
+                     "Number of shards for the test sets.")
 
-flags.DEFINE_boolean("invert_light_curves", False,
-                     "Whether to generate inverted light curves.")
-
-flags.DEFINE_string(
-    "light_curve_scramble_type", None,
-    "What scrambling procedure to use. One of 'SCR1', 'SCR2', 'SCR3', or None.")
 
 FLAGS = flags.FLAGS
 
@@ -89,6 +72,65 @@ _LABEL_COLUMN = "av_training_set"
 _GLOBAL_VIEW_NUM_BINS = 2001
 _LOCAL_VIEW_NUM_BINS = 201
 _LOCAL_VIEW_NUM_DURATIONS = 4
+
+
+def _parse_configs():
+  """Parses the configuration files from FLAGS.config_json."""
+  configs = []
+  for config_filename in FLAGS.config_json.split(","):
+    if tf.gfile.Exists(config_filename):
+      with tf.gfile.Open(config_filename) as f:
+        config = json.load(f)
+    else:
+      raise ValueError("Cannot find config file: {}".format(config_filename))
+    expected_keys = {
+        "name", "kepler_data_dir", "input_event_csv_file", "tce_id_dir",
+        "astrowavenet_file_pattern", "injected_group", "scramble_type",
+        "invert_light_curves"
+    }
+    if set(config.keys()) != expected_keys:
+      raise ValueError("Expected config keys to be {}, got {}".format(
+          expected_keys, config.keys()))
+
+    # Add config settings common to all TCE types.
+    config = configdict.ConfigDict(config)
+    config.update({
+        "gap_width": 0.75,
+        "normalize_method": "spline",
+        "normalize_args": {
+            "bkspace_min": 0.5,
+            "bkspace_max": 20,
+            "bkspace_num": 20,
+            "penalty_coeff": 1.0,
+        },
+        "model_dir": FLAGS.model_dir,
+        "checkpoint_filename": FLAGS.checkpoint_filename,
+        "column_value_whitelists": {
+            _LABEL_COLUMN: ["PC", "AFP", "NTP", "INV", "INJ1", "INJ2", "SCR1"]
+        },
+        "emb_views": {
+            "global_view_nbins": _GLOBAL_VIEW_NUM_BINS,
+            "global_view_bin_width_factor": 1 / _GLOBAL_VIEW_NUM_BINS,
+            "local_view_nbins": _LOCAL_VIEW_NUM_BINS,
+            "local_view_bin_width_factor":
+                (_LOCAL_VIEW_NUM_DURATIONS / _LOCAL_VIEW_NUM_BINS),
+            "local_view_num_durations": _LOCAL_VIEW_NUM_DURATIONS,
+            "aggr_fn": "sum",
+        },
+        "flux_views": {
+            "global_view_nbins": _GLOBAL_VIEW_NUM_BINS,
+            "global_view_bin_width_factor": 1 / _GLOBAL_VIEW_NUM_BINS,
+            "local_view_nbins": _LOCAL_VIEW_NUM_BINS,
+            "local_view_bin_width_factor": 0.16,
+            "local_view_num_durations": _LOCAL_VIEW_NUM_DURATIONS,
+            "aggr_fn": "median",
+        },
+        "apply_relu_to_embeddings": False,
+        "align_to_predictions": False,
+        "interpolate_missing_time": True,
+    })
+    configs.append(config)
+  return configs
 
 
 def _read_events(config):
@@ -115,11 +157,11 @@ def _read_events(config):
     raise ValueError("TCE ids are not unique.")
 
   # Add artificial labels for simulated data.
-  if FLAGS.injected_group:
+  if config.injected_group:
     assert _LABEL_COLUMN not in events
-    events[_LABEL_COLUMN] = FLAGS.injected_group.upper()
+    events[_LABEL_COLUMN] = config.injected_group.upper()
 
-  if FLAGS.invert_light_curves:
+  if config.invert_light_curves:
     assert _LABEL_COLUMN not in events
     events[_LABEL_COLUMN] = "INV"
 
@@ -290,136 +332,158 @@ class _GenerateExampleDoFn(beam.DoFn):
     yield inputs
 
 
+class _CountLabelsDoFn(beam.DoFn):
+  """Counts the labels in processed TCEs."""
+
+  def __init__(self, prefix):
+    self.prefix = prefix
+
+  def get_counter(self, name):
+    return beam.metrics.Metrics.counter(self.__class__.__name__, name)
+
+  def process(self, inputs):
+    """Counts a single tf.Example and passes it through to the next stage."""
+    self.get_counter("{}-examples-total".format(self.prefix)).inc()
+    label = example_util.get_bytes_feature(inputs["example"], _LABEL_COLUMN)[0]
+    self.get_counter("{}-examples-{}".format(self.prefix, label)).inc()
+    yield inputs
+
+
+def _write_subset(dataset_name, name, values):
+  """Writes the tf.Examples in a subset to TFRecord files."""
+  if name == "train":
+    num_shards = FLAGS.num_shards_train
+  elif name == "val":
+    num_shards = FLAGS.num_shards_val
+  elif name == "test":
+    num_shards = FLAGS.num_shards_test
+  else:
+    raise ValueError("Unrecognized subset name: {}".format(name))
+
+  # Write the tf.Examples in TFRecord format.
+  utils.write_to_tfrecord(
+      values,
+      output_dir=os.path.join(FLAGS.output_dir, dataset_name),
+      output_name=name,
+      value_name="example",
+      value_coder=beam.coders.ProtoCoder(tf.train.Example),
+      num_shards=num_shards,
+      stage_name_suffix=dataset_name)
+
+
+def _process_tces(root, config):
+  """Creates a beam pipeline to process a set of TCEs."""
+  name = config.name
+
+  # Read input events table.
+  events = _read_events(config)
+
+  # Initialize DoFns.
+  read_light_curve = light_curve_fns.ReadLightCurveDoFn(
+      config.kepler_data_dir,
+      injected_group=config.injected_group,
+      scramble_type=config.scramble_type,
+      invert_light_curves=config.invert_light_curves)
+  process_light_curve = light_curve_fns.ProcessLightCurveDoFn(
+      gap_width=config.gap_width,
+      normalize_method=config.normalize_method,
+      normalize_args=config.normalize_args)
+  extract_embeddings = embedding_fns.ExtractEmbeddingsDoFn(
+      model_dir=config.model_dir,
+      checkpoint_filename=config.checkpoint_filename,
+      apply_relu_to_embeddings=config.apply_relu_to_embeddings,
+      align_to_predictions=config.align_to_predictions,
+      interpolate_missing_time=config.interpolate_missing_time)
+  generate_example = _GenerateExampleDoFn(config)
+
+  # Read TCE ids corresponding to each partition.
+  partition_to_ids = {}
+  for subset in ["train", "val", "test"]:
+    tce_id_filename = os.path.join(config.tce_id_dir,
+                                   "{}_tce_ids.txt".format(subset))
+    with tf.gfile.Open(tce_id_filename) as f:
+      tce_ids = set([line.strip() for line in f])
+    partition_to_ids[subset] = tce_ids
+    logging.info("%s: Partition '%s' with %s TCE ids.", name, subset,
+                 len(tce_ids))
+  partition_fn = utils.TrainValTestPartitionFn("tce_id", partition_to_ids)
+
+  # Create pipeline.
+  events_by_kepid = (
+      root | "{}-create_event_pcollection".format(name) >> beam.Create(
+          [(int(event["kepid"]), event) for _, event in events.iterrows()]))
+  kepler_ids = [{"kepler_id": int(kepid)} for kepid in set(events["kepid"])]
+  logging.info("%s: Reading light curves for %d unique Kepler IDs", name,
+               len(kepler_ids))
+  light_curves = (
+      root
+      | "{}-create_kepid_pcollection".format(name) >> beam.Create(kepler_ids)
+      | "{}-read_light_curves".format(name) >> beam.ParDo(read_light_curve)
+      |
+      "{}-process_light_curves".format(name) >> beam.ParDo(process_light_curve)
+      | "{}-key_light_curves_by_kepid".format(name) >>
+      beam.Map(_key_dict_by_kepid))
+  wavenet_inputs = (
+      root
+      | "{}-read_wavenet_inputs".format(name) >>
+      beam.io.tfrecordio.ReadFromTFRecord(
+          config.astrowavenet_file_pattern,
+          coder=beam.coders.ProtoCoder(tf.train.Example))
+      | "{}-key_examples_by_kepid".format(name) >>
+      beam.Map(_key_example_by_kepid))
+  results = (
+      [events_by_kepid, light_curves, wavenet_inputs]
+      | "{}-join_events_and_inputs".format(name) >> beam.CoGroupByKey()
+      | "{}-group_events_and_inputs".format(name) >> beam.ParDo(
+          _GroupEventsAndExamplesDoFn())
+      | "{}-extract_embeddings".format(name) >> beam.ParDo(extract_embeddings)
+      | "{}-generate_examples".format(name) >> beam.ParDo(generate_example)
+      | "{}-reshuffle".format(name) >> beam.Reshuffle()
+      | "{}-partition_results".format(name) >> beam.Partition(
+          partition_fn, partition_fn.num_partitions))
+
+  return zip(partition_fn.partition_names, results)
+
+
 def main(argv):
   del argv  # Unused.
   logging.set_verbosity(logging.INFO)
 
-  config = configdict.ConfigDict({
-      "input_event_csv_file": FLAGS.input_event_csv_file,
-      "tce_id_dir": FLAGS.tce_id_dir,
-      "kepler_data_dir": FLAGS.kepler_data_dir,
-      "gap_width": 0.75,
-      "normalize_method": "spline",
-      "normalize_args": {
-          "bkspace_min": 0.5,
-          "bkspace_max": 20,
-          "bkspace_num": 20,
-          "penalty_coeff": 1.0,
-      },
-      "injected_group": FLAGS.injected_group,
-      "invert_light_curves": FLAGS.invert_light_curves,
-      "scramble_type": FLAGS.light_curve_scramble_type,
-      "astrowavenet_file_pattern": FLAGS.astrowavenet_file_pattern,
-      "model_dir": FLAGS.model_dir,
-      "checkpoint_filename": FLAGS.checkpoint_filename,
-      "column_value_whitelists": {
-          _LABEL_COLUMN: ["PC", "AFP", "NTP", "INV", "INJ1", "INJ2", "SCR1"]
-      },
-      "emb_views": {
-          "global_view_nbins": _GLOBAL_VIEW_NUM_BINS,
-          "global_view_bin_width_factor": 1 / _GLOBAL_VIEW_NUM_BINS,
-          "local_view_nbins": _LOCAL_VIEW_NUM_BINS,
-          "local_view_bin_width_factor":
-              (_LOCAL_VIEW_NUM_DURATIONS / _LOCAL_VIEW_NUM_BINS),
-          "local_view_num_durations": _LOCAL_VIEW_NUM_DURATIONS,
-          "aggr_fn": "sum",
-      },
-      "flux_views": {
-          "global_view_nbins": _GLOBAL_VIEW_NUM_BINS,
-          "global_view_bin_width_factor": 1 / _GLOBAL_VIEW_NUM_BINS,
-          "local_view_nbins": _LOCAL_VIEW_NUM_BINS,
-          "local_view_bin_width_factor": 0.16,
-          "local_view_num_durations": _LOCAL_VIEW_NUM_DURATIONS,
-          "aggr_fn": "median",
-      },
-      "apply_relu_to_embeddings": True,
-  })
-
   def pipeline(root):
     """Beam pipeline for preprocessing Kepler events."""
-    # Write the config.
-    config_json = json.dumps(config, indent=2)
-    root | beam.Create([config_json]) | "write_config" >> beam.io.WriteToText(
-        os.path.join(FLAGS.output_dir, "config.json"),
-        num_shards=1,
-        shard_name_template="")
+    # Separately process and write each TCE dataset, and gather all the results.
+    configs = _parse_configs()
+    subsets = {
+        "train": [],
+        "val": [],
+        "test": [],
+    }
+    for config in configs:
+      output_dir = os.path.join(FLAGS.output_dir, config.name)
+      # Write the config.
+      config_json = json.dumps(config, indent=2)
+      logging.info(config_json)
+      (root
+       | "{}-create-config".format(config.name) >> beam.Create([config_json])
+       | "{}-write_config".format(config.name) >> beam.io.WriteToText(
+           os.path.join(output_dir, "config.json"),
+           num_shards=1,
+           shard_name_template=""))
+      # Process TCEs and write each subset.
+      results = _process_tces(root, config)
+      for subset_name, subset_values in results:
+        _write_subset(config.name, subset_name, subset_values)
+        subsets[subset_name].append(subset_values)
 
-    # Read input events table.
-    events = _read_events(config)
-
-    # Initialize DoFns.
-    read_light_curve = light_curve_fns.ReadLightCurveDoFn(
-        config.kepler_data_dir,
-        injected_group=config.injected_group,
-        scramble_type=config.scramble_type,
-        invert_light_curves=config.invert_light_curves)
-    process_light_curve = light_curve_fns.ProcessLightCurveDoFn(
-        gap_width=config.gap_width,
-        normalize_method=config.normalize_method,
-        normalize_args=config.normalize_args)
-    extract_embeddings = embedding_fns.ExtractEmbeddingsDoFn(
-        model_dir=config.model_dir,
-        checkpoint_filename=config.checkpoint_filename,
-        apply_relu_to_embeddings=config.apply_relu_to_embeddings)
-    generate_example = _GenerateExampleDoFn(config)
-
-    # Read TCE ids corresponding to each partition.
-    partition_to_ids = {}
-    for subset in ["train", "val", "test"]:
-      tce_id_filename = os.path.join(config.tce_id_dir,
-                                     "{}_tce_ids.txt".format(subset))
-      with tf.gfile.Open(tce_id_filename) as f:
-        tce_ids = set([line.strip() for line in f])
-      partition_to_ids[subset] = tce_ids
-      logging.info("Partition '%s' with %s TCE ids.", subset, len(tce_ids))
-    partition_fn = utils.TrainValTestPartitionFn("tce_id", partition_to_ids)
-
-    # Create pipeline.
-    events_by_kepid = root | "create_event_pcollection" >> beam.Create(
-        [(int(event["kepid"]), event) for _, event in events.iterrows()])
-    kepler_ids = [{"kepler_id": int(kepid)} for kepid in set(events["kepid"])]
-    logging.info("Reading light curves for %d unique Kepler IDs",
-                 len(kepler_ids))
-    light_curves = (
-        root
-        | "create_kepid_pcollection" >> beam.Create(kepler_ids)
-        | "read_light_curves" >> beam.ParDo(read_light_curve)
-        | "process_light_curves" >> beam.ParDo(process_light_curve)
-        | "key_light_curves_by_kepid" >> beam.Map(_key_dict_by_kepid))
-    wavenet_inputs = (
-        root
-        | "read_wavenet_inputs" >> beam.io.tfrecordio.ReadFromTFRecord(
-            config.astrowavenet_file_pattern,
-            coder=beam.coders.ProtoCoder(tf.train.Example))
-        | "key_examples_by_kepid" >> beam.Map(_key_example_by_kepid))
-    results = (
-        [events_by_kepid, light_curves, wavenet_inputs]
-        | "join_events_and_inputs" >> beam.CoGroupByKey()
-        | "group_events_and_inputs" >> beam.ParDo(_GroupEventsAndExamplesDoFn())
-        | "extract_embeddings" >> beam.ParDo(extract_embeddings)
-        | "generate_examples" >> beam.ParDo(generate_example)
-        | "reshuffle" >> beam.Reshuffle()
-        | "partition_results" >> beam.Partition(partition_fn,
-                                                partition_fn.num_partitions))
-
-    for name, subset in zip(partition_fn.partition_names, results):
-      if name == "train":
-        num_shards = FLAGS.num_shards_train
-      elif name == "val":
-        num_shards = FLAGS.num_shards_val
-      elif name == "test":
-        num_shards = FLAGS.num_shards_test
-      else:
-        raise ValueError("Unrecognized subset name: %s" % name)
-
-      # Write the tf.Examples in TFRecord format.
-      utils.write_to_tfrecord(
-          subset,
-          output_dir=FLAGS.output_dir,
-          output_name=name,
-          value_name="example",
-          value_coder=beam.coders.ProtoCoder(tf.train.Example),
-          num_shards=num_shards)
+    # Create one dataset comprising all TCE datasets.
+    for subset_name, subset_values in subsets.items():
+      combined_subset_values = (
+          subset_values
+          | "combined-{}-flatten".format(subset_name) >> beam.Flatten()
+          | "combined-{}-count_labels".format(subset_name) >> beam.ParDo(
+              _CountLabelsDoFn(prefix="combined-{}".format(subset_name)))
+          | "combined-{}-reshuffle".format(subset_name) >> beam.Reshuffle())
+      _write_subset("combined", subset_name, combined_subset_values)
 
   pipeline.run()
   logging.info("Preprocessing complete.")

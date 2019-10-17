@@ -79,8 +79,8 @@ py_library(
     deps = [
         "//astrowavenet:astrowavenet_model",
         "//astrowavenet/data:kepler_light_curves",
+        "//light_curve:util",
         "//tf_util:config_util",
         "//tf_util:configdict",
-        "//tf_util:example_util",
     ],
 )
