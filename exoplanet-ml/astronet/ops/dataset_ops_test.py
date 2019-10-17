@@ -244,7 +244,7 @@ class BuildDatasetTest(tf.test.TestCase):
                 "is_time_series": False,
                 "length": 1
             }
-        }
+        },
     })
 
   def testNonExistentFileRaisesValueError(self):
@@ -398,7 +398,7 @@ class BuildDatasetTest(tf.test.TestCase):
           input_config=self._input_config,
           batch_size=4)
 
-  def testUnknownLabel(self):
+  def testUnknownLabelRaisesValueError(self):
     self._input_config["label_feature"] = "label_str"
 
     # label_map does not include "NTP".
@@ -425,6 +425,39 @@ class BuildDatasetTest(tf.test.TestCase):
 
       # Unknown label "NTP".
       with self.assertRaises(tf.errors.InvalidArgumentError):
+        sess.run(labels)
+
+  def testLabelFiltering(self):
+    self._input_config["label_feature"] = "label_str"
+
+    # "AFP" is -1, so these examples should be filtered.
+    self._input_config["label_map"] = {"PC": 1, "AFP": -1, "NTP": 0}
+
+    dataset = dataset_ops.build_dataset(
+        file_pattern=self._file_pattern,
+        input_config=self._input_config,
+        batch_size=4)
+
+    # We need an initializable iterator when using labels because of the
+    # stateful label id hash table.
+    iterator = dataset.make_initializable_iterator()
+    inputs = iterator.get_next()
+    init_op = tf.tables_initializer()
+
+    # Expect features and labels.
+    self.assertItemsEqual(["time_series_features", "aux_features", "labels"],
+                          inputs.keys())
+    labels = inputs["labels"]
+
+    with self.session() as sess:
+      sess.run([init_op, iterator.initializer])
+
+      # Fetch 3 batches.
+      np.testing.assert_array_equal([1, 0, 1, 0], sess.run(labels))
+      np.testing.assert_array_equal([1, 0, 1], sess.run(labels))
+
+      # No more batches.
+      with self.assertRaises(tf.errors.OutOfRangeError):
         sess.run(labels)
 
   def testReverseTimeSeries(self):

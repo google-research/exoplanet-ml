@@ -41,7 +41,8 @@ def base():
           # Name of the feature containing training labels.
           "label_feature": "av_training_set",
 
-          # Label string to integer id.
+          # Label string to integer id. Use -1 to ignore examples with that
+          # label.
           "label_map": {
               "PC": 1,  # Planet Candidate.
               "AFP": 0,  # Astrophysical False Positive.

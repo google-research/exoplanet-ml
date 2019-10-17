@@ -178,19 +178,23 @@ def build_dataset(file_pattern,
   if include_labels:
     # Ensure that the label ids are contiguous integers starting at 0.
     label_ids = set(input_config.label_map.values())
+    if -1 in label_ids:
+      # The special ID -1 marks labels that will be removed.
+      label_ids.remove(-1)
     if label_ids != set(range(len(label_ids))):
       raise ValueError(
           "Label IDs must be contiguous integers starting at 0. Got: {}".format(
               label_ids))
 
-    # Create a HashTable mapping label strings to integer ids.
+    # Create a HashTable mapping label strings to integer ids. Lookup failures
+    # will return -2.
     table_initializer = tf.contrib.lookup.KeyValueTensorInitializer(
         keys=list(input_config.label_map.keys()),
         values=list(input_config.label_map.values()),
         key_dtype=tf.string,
         value_dtype=tf.int32)
     label_to_id = tf.contrib.lookup.HashTable(
-        table_initializer, default_value=-1)
+        table_initializer, default_value=-2)
 
   def _example_parser(serialized_example):
     """Parses a single tf.Example into feature and label tensors."""
@@ -262,11 +266,11 @@ def build_dataset(file_pattern,
     if include_labels:
       label_value = parsed_features.pop(input_config.label_feature)
       label_id = label_to_id.lookup(label_value)
-      # Ensure that the label_id is nonnegative to verify a successful hash
-      # map lookup.
-      assert_known_label = tf.Assert(
-          tf.greater_equal(label_id, tf.constant(0, tf.int32)),
-          ["Unknown label string:", label_value])
+      # Assert the label is recognized. -1 is allowed; these will be filtered
+      # later.
+      is_known_label = tf.greater_equal(label_id, tf.constant(-1, tf.int32))
+      assert_known_label = tf.Assert(is_known_label,
+                                     ["Unknown label string:", label_value])
       with tf.control_dependencies([assert_known_label]):
         label_id = tf.identity(label_id)
 
@@ -300,6 +304,14 @@ def build_dataset(file_pattern,
 
   # Map the parser over the dataset.
   dataset = dataset.map(_example_parser, num_parallel_calls=8)
+
+  if include_labels and -1 in input_config.label_map.values():
+    # Filter out examples with label -1 (we already asserted that all labels are
+    # at least -1, so we can simply filter out the negative labels).
+    def include_example(inputs):
+      return tf.greater_equal(inputs["labels"], tf.constant(0, tf.int32))
+
+    dataset = dataset.filter(include_example).prefetch(1024)
 
   # Batch results by up to batch_size.
   dataset = dataset.batch(batch_size)
