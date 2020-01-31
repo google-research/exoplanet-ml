@@ -1,0 +1,7 @@
+tensorflow
+pandas
+numpy
+scipy
+astropy
+pydl
+absl-py
