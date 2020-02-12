@@ -1,4 +1,5 @@
-tensorflow
+tensorflow==1.15
+tensorflow-probability==0.8
 pandas
 numpy
 scipy
