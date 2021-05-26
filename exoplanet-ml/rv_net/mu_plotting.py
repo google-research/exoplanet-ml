@@ -26,4 +26,4 @@ def mu_plotting (df, names):
     
     
 if __name__ == '__main__':
-    master_shifting_planet()
+    mu_plotting()
