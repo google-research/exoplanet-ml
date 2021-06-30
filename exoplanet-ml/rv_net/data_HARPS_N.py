@@ -52,8 +52,8 @@ class DatasetBuilder(object):
         def _example_parser(serialized_example):
             """Parses a single tf.Example into feature and label tensors."""
             data_fields = {
-                self.hparams.ccf_feature_name: tf.FixedLenFeature([161], tf.float32),
-                self.hparams.label_feature_name: tf.FixedLenFeature([], tf.float32),
+                self.hparams.ccf_feature_name: tf.io.FixedLenFeature([161], tf.float32),
+                self.hparams.label_feature_name: tf.io.FixedLenFeature([], tf.float32),
             }
             parsed_fields = tf.parse_single_example(serialized_example, features=data_fields)
             ccf_data = parsed_fields[self.hparams.ccf_feature_name]
