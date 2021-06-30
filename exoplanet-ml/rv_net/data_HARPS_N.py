@@ -54,14 +54,17 @@ class DatasetBuilder(object):
             data_fields = {
                 self.hparams.ccf_feature_name: tf.io.FixedLenFeature([161], tf.float32),
                 self.hparams.label_feature_name: tf.io.FixedLenFeature([], tf.float32),
+                self.hparams.label_feature_name2: tf.io.FixedLenFeature([], tf.float32),
             }
-            parsed_fields = tf.parse_single_example(serialized_example, features=data_fields)
+            parsed_fields = tf.io.parse_single_example(serialized_example, features=data_fields)
             ccf_data = parsed_fields[self.hparams.ccf_feature_name]
             label = parsed_fields[self.hparams.label_feature_name]
             label *= self.hparams.label_rescale_factor  # Rescale the label.
+            label2 = parsed_fields[self.hparams.label_feature_name2]
             return {
                 "ccf_data": ccf_data,
                 "label": label,
+                "bjd": label2,
             }
 
         # Map the parser over the dataset.
