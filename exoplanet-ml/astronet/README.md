@@ -78,29 +78,7 @@ that have been assigned ground truth labels by humans.
 
 A pre-computed training set (along with held-out evaluation and test sets) is
 available for download at the following URL:
-https://storage.googleapis.com/kepler-ml/astronet/data/kepler/kepler-tce-tfrecords-20180220.tar.gz
-
-To download and extract the files in the training set, run the following
-commands:
-
-```bash
-# Download compressed archive (~105.7MB).
-wget https://storage.googleapis.com/kepler-ml/astronet/data/kepler/kepler-tce-tfrecords-20180220.tar.gz
-
-# Create directory for the extracted TFRecord files.
-BASE_DIR="${HOME}/astronet/"
-mkdir -p ${BASE_DIR}
-
-# Extract files.
-tar -xvf kepler-tce-tfrecords-20180220.tar.gz -C ${BASE_DIR}
-
-# Extracted files are located in the 'tfrecord' subdirectory.
-TFRECORD_DIR="${BASE_DIR}/tfrecord"
-ls -l ${TFRECORD_DIR}
-
-# Clean up archive file.
-rm kepler-tce-tfrecords-20180220.tar.gz
-```
+https://drive.google.com/drive/folders/1Gw-o7sgWC1Y_mlaehN85qH5XC161EHSE?usp=sharing
 
 If you like, you can read through the following sections to understand how the
 training set was created. Otherwise, you can jump directly to [Train an
